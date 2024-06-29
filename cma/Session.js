@@ -1,10 +1,12 @@
 import * as THREE from "three";
 import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
+import ThreeMeshUI from "three-mesh-ui";
 
 export class Session {
     constructor() {
         this.inputManager = null;
-        this.scene = new THREE.Scene();
+        this.worldScene = new THREE.Scene();
+        this.guiScene = new THREE.Scene();
         this.clock = new THREE.Clock();
 
         // camera
@@ -15,26 +17,36 @@ export class Session {
             1000
         );
         this.targetCamera.rotation.order = "YXZ";
-        this.targetCamera.position.z = 15;
+        this.targetCamera.position.z = 0;
+        this.guiScene.add(this.targetCamera);
+
         this.targetVelocity = new THREE.Vector3();
         this.upDirection = new THREE.Vector3(0, 1, 0);
 
         // renderer
         this.renderer = new THREE.WebGLRenderer();
         this.renderer.setSize(window.innerWidth, window.innerHeight);
+        // handle autoclear manually
+        this.renderer.autoClear = false;
         document.body.appendChild(this.renderer.domElement);
 
         // light
         const ambientLight = new THREE.AmbientLight(0xffffff, 0.9);
         ambientLight.castShadow = true;
-        this.scene.add(ambientLight);
+        this.worldScene.add(ambientLight);
     }
 
     animate() {
         const deltaTime = this.clock.getDelta();
         this.controls(deltaTime);
         this.targetCamera.position.add(this.targetVelocity);
-        this.renderer.render(this.scene, this.targetCamera);
+        ThreeMeshUI.update();
+
+        this.renderer.clear();
+        this.renderer.render(this.worldScene, this.targetCamera);
+
+        this.renderer.clearDepth();
+        this.renderer.render(this.guiScene, this.targetCamera);
     }
 
     start() {
@@ -45,7 +57,7 @@ export class Session {
         loader.load(
             apartment,
             function (gltf) {
-                this.scene.add(gltf.scene);
+                this.worldScene.add(gltf.scene);
             }.bind(this),
             undefined,
             function (error) {
