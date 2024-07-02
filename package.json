@@ -4,6 +4,7 @@
     "three-mesh-ui": "^6.5.4"
   },
   "devDependencies": {
+    "@vitejs/plugin-basic-ssl": "^1.1.0",
     "vite": "^5.3.1"
   }
 }
