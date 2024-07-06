@@ -4,10 +4,10 @@ import ThreeMeshUI from "three-mesh-ui";
 
 export class Session {
     constructor() {
-        this.inputManager = null;
         this.worldScene = new THREE.Scene();
         this.guiScene = new THREE.Scene();
         this.clock = new THREE.Clock();
+        this.loop = null;
 
         // camera
         this.targetCamera = new THREE.PerspectiveCamera(
@@ -19,9 +19,6 @@ export class Session {
         this.targetCamera.rotation.order = "YXZ";
         this.targetCamera.position.z = 0;
         this.guiScene.add(this.targetCamera);
-
-        this.targetVelocity = new THREE.Vector3();
-        this.upDirection = new THREE.Vector3(0, 1, 0);
 
         // renderer
         this.renderer = new THREE.WebGLRenderer();
@@ -37,16 +34,14 @@ export class Session {
     }
 
     animate() {
-        const deltaTime = this.clock.getDelta();
-        this.controls(deltaTime);
-        this.targetCamera.position.add(this.targetVelocity);
-        ThreeMeshUI.update();
-
         this.renderer.clear();
         this.renderer.render(this.worldScene, this.targetCamera);
 
         this.renderer.clearDepth();
         this.renderer.render(this.guiScene, this.targetCamera);
+
+        const deltaTime = this.clock.getDelta();
+        this.loop(deltaTime);
     }
 
     start() {
@@ -66,59 +61,5 @@ export class Session {
         );
 
         this.renderer.setAnimationLoop(this.animate.bind(this));
-    }
-
-    getForwardVector() {
-        let vector = new THREE.Vector3();
-        this.targetCamera.getWorldDirection(vector);
-        vector.y = 0;
-        vector.normalize();
-        return vector;
-    }
-
-    getSideVector() {
-        let vector = this.getForwardVector().cross(this.targetCamera.up);
-        return vector;
-    }
-
-    controls(deltaTime) {
-        const speedDelta = deltaTime * 10;
-        this.targetVelocity.set(0, 0, 0);
-
-        if (this.inputManager.inputStates["KeyW"]) {
-            this.targetVelocity.add(
-                this.getForwardVector().multiplyScalar(speedDelta)
-            );
-        }
-
-        if (this.inputManager.inputStates["KeyS"]) {
-            this.targetVelocity.add(
-                this.getForwardVector().multiplyScalar(-speedDelta)
-            );
-        }
-
-        if (this.inputManager.inputStates["KeyA"]) {
-            this.targetVelocity.add(
-                this.getSideVector().multiplyScalar(-speedDelta)
-            );
-        }
-
-        if (this.inputManager.inputStates["KeyD"]) {
-            this.targetVelocity.add(
-                this.getSideVector().multiplyScalar(speedDelta)
-            );
-        }
-
-        if (this.inputManager.inputStates["Space"]) {
-            this.targetVelocity.add(
-                this.upDirection.clone().multiplyScalar(speedDelta)
-            );
-        }
-
-        if (this.inputManager.inputStates["ShiftLeft"]) {
-            this.targetVelocity.add(
-                this.upDirection.clone().multiplyScalar(-speedDelta)
-            );
-        }
     }
 }

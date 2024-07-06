@@ -6,12 +6,24 @@ import FontJSON from "./public/fonts/Roboto-msdf.json";
 import FontImage from "./public/fonts/Roboto-msdf.png";
 
 let session = new CMA.Session();
-let inputManager = CMA.InputManager.getDefaultInputManager(
-    session.targetCamera
-);
-session.inputManager = inputManager;
+let inputManager = new CMA.DesktopInputManager(session.targetCamera);
+session.loop = function (deltaTime) {
+    inputManager.update(deltaTime);
+    ThreeMeshUI.update();
+};
 session.start();
-inputManager.init("desktop");
+
+// window.addEventListener('touchstart', (event) => {
+//     selectState = true;
+//     mouse.x = (event.touches[0].clientX / window.innerWidth) * 2 - 1;
+//     mouse.y = -(event.touches[0].clientY / window.innerHeight) * 2 + 1;
+// });
+
+// window.addEventListener('touchend', () => {
+//     selectState = false;
+//     mouse.x = null;
+//     mouse.y = null;
+// });
 
 const container = new ThreeMeshUI.Block({
     width: 1.3,
@@ -36,3 +48,30 @@ container.add(
 );
 container.position.set(0, 0, -1);
 session.targetCamera.add(container);
+
+const buttonOptions = {
+    width: 0.4,
+    height: 0.15,
+    justifyContent: "center",
+    offset: 0.05,
+    margin: 0.02,
+    borderRadius: 0.075,
+};
+
+const button1 = new CMA.Button(buttonOptions);
+const button2 = new CMA.Button(buttonOptions);
+
+button1.add(new ThreeMeshUI.Text({ content: "restart app" }));
+
+button2.add(new ThreeMeshUI.Text({ content: "close menu" }));
+
+button1.addEventListener("click", (event) => {
+    console.log("button press 1");
+});
+
+button2.addEventListener("click", (event) => {
+    console.log("button press 2");
+});
+
+container.add(button1, button2);
+inputManager.raycastTargets.push(button1, button2);

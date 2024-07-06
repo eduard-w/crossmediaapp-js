@@ -1,59 +1,94 @@
-export class InputManager {
-    constructor(object3d) {
-        this.target = object3d;
-        this.initDesktop = null;
-        this.initHmd = null;
-        this.initMobile = null;
-        this.inputStates = {};
+import * as THREE from "three";
+
+export class InputManager extends THREE.EventDispatcher {
+    /* 
+    Events:
+    - hover
+    - selectup
+    - selectdown
+    */
+
+    constructor(targetTransform) {
+        super();
+
+        this.targetTransform = targetTransform;
+        this.lastX = 0.0;
+        this.lastY = 0.0;
+        this.raycaster = new THREE.Raycaster();
+        this.raycastTargets = [];
+        this.upDirection = new THREE.Vector3(0, 1, 0);
+        this.isSelectorDown = false;
+        this.selectedObject = null;
+
+        this.addEventListener("hover", (event) => {
+            this.selectorX = event.posX;
+            this.selectorY = event.posY;
+        });
+        this.addEventListener("selectdown", (event) => {
+            this.isSelectorDown = true;
+            if (this.selectedObject) {
+                this.selectedObject.dispatchEvent(event);
+            }
+        });
+        this.addEventListener("selectup", (event) => {
+            this.isSelectorDown = false;
+            if (this.selectedObject) {
+                this.selectedObject.dispatchEvent(event);
+            }
+        });
     }
 
-    init(sessionMode) {
-        switch (sessionMode) {
-            case "desktop":
-                this.initDesktop();
-            case "hmd":
-                this.initHmd();
-            case "mobile":
-                this.initMobile();
-        }
+    raycast() {
+        return this.raycastTargets.reduce((closestIntersection, obj) => {
+            const intersection = this.raycaster.intersectObject(obj, true);
+            if (!intersection[0]) return closestIntersection;
+            if (
+                !closestIntersection ||
+                intersection[0].distance < closestIntersection.distance
+            ) {
+                intersection[0].object = obj;
+                return intersection[0];
+            }
+            return closestIntersection;
+        }, null);
     }
 
-    static getDefaultInputManager(target) {
-        let manager = new InputManager(target);
+    getForwardVector() {
+        let vector = new THREE.Vector3();
+        this.targetTransform.getWorldDirection(vector);
+        vector.y = 0;
+        vector.normalize();
+        return vector;
+    }
 
-        manager.initDesktop = function () {
-            const clamp = (num, min, max) => Math.min(Math.max(num, min), max);
+    getSideVector() {
+        let vector = this.getForwardVector().cross(this.targetTransform.up);
+        return vector;
+    }
 
-            document.addEventListener("mousedown", () => {
-                document.body.requestPointerLock();
-            });
-
-            document.body.addEventListener("mousemove", (event) => {
-                if (document.pointerLockElement === document.body) {
-                    manager.target.rotation.x = clamp(
-                        manager.target.rotation.x - event.movementY / 500,
-                        -Math.PI / 2 + 0.01,
-                        Math.PI / 2 - 0.01
-                    );
-                    manager.target.rotation.y -= event.movementX / 500;
+    update(deltaTime) {
+        this.raycaster.setFromCamera(
+            new THREE.Vector2(this.selectorX, this.selectorY),
+            this.targetTransform
+        );
+        let intersect = this.raycast();
+        if (intersect) {
+            if (intersect.object !== this.selectedObject) {
+                if (this.selectedObject) {
+                    this.selectedObject.dispatchEvent({
+                        type: "hoverup",
+                    });
                 }
+                this.selectedObject = intersect.object;
+                this.selectedObject.dispatchEvent({
+                    type: "hoverdown",
+                });
+            }
+        } else if (this.selectedObject !== null) {
+            this.selectedObject.dispatchEvent({
+                type: "hoverup",
             });
-
-            document.addEventListener("keydown", (event) => {
-                manager.inputStates[event.code] = true;
-            });
-
-            document.addEventListener("keyup", (event) => {
-                manager.inputStates[event.code] = false;
-            });
-        };
-        manager.initHmd = function () {
-            // TODO
-        };
-        manager.initMobile = function () {
-            // TODO
-        };
-
-        return manager;
+            this.selectedObject = null;
+        }
     }
 }
