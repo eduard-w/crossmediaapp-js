@@ -66,11 +66,7 @@ export class InputManager extends THREE.EventDispatcher {
         return vector;
     }
 
-    update(deltaTime) {
-        this.raycaster.setFromCamera(
-            new THREE.Vector2(this.selectorX, this.selectorY),
-            this.targetTransform
-        );
+    handleRaycast() {
         let intersect = this.raycast();
         if (intersect) {
             if (intersect.object !== this.selectedObject) {
@@ -89,6 +85,9 @@ export class InputManager extends THREE.EventDispatcher {
                 type: "hoverup",
             });
             this.selectedObject = null;
-        }
+        }        
+    }
+
+    update(deltaTime) {
     }
 }

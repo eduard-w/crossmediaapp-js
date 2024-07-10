@@ -5,12 +5,7 @@ import ThreeMeshUI from "three-mesh-ui";
 import FontJSON from "./public/fonts/Roboto-msdf.json";
 import FontImage from "./public/fonts/Roboto-msdf.png";
 
-let session = new CMA.Session();
-let inputManager = new CMA.DesktopInputManager(session.targetCamera);
-session.loop = function (deltaTime) {
-    inputManager.update(deltaTime);
-    ThreeMeshUI.update();
-};
+let session = new CMA.Session("vr-6dof");
 session.start();
 
 // window.addEventListener('touchstart', (event) => {
@@ -74,4 +69,4 @@ button2.addEventListener("click", (event) => {
 });
 
 container.add(button1, button2);
-inputManager.raycastTargets.push(button1, button2);
+session.inputManager.raycastTargets.push(button1, button2);

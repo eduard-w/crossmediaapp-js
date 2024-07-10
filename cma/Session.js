@@ -1,13 +1,15 @@
 import * as THREE from "three";
+import * as CMA from "./Cma.js";
 import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
 import ThreeMeshUI from "three-mesh-ui";
+import { VRButton } from 'three/addons/webxr/VRButton.js';
 
 export class Session {
-    constructor() {
+    constructor(sessionMode) {
         this.worldScene = new THREE.Scene();
         this.guiScene = new THREE.Scene();
         this.clock = new THREE.Clock();
-        this.loop = null;
+        this.sessionMode = sessionMode;
 
         // camera
         this.targetCamera = new THREE.PerspectiveCamera(
@@ -31,7 +33,24 @@ export class Session {
         const ambientLight = new THREE.AmbientLight(0xffffff, 0.9);
         ambientLight.castShadow = true;
         this.worldScene.add(ambientLight);
+
+        switch(this.sessionMode) {
+            case "desktop":
+                this.inputManager = new CMA.DesktopInputManager(this.targetCamera);
+                break;
+            case "vr-6dof":
+                this.renderer.xr.enabled = true;
+                this.inputManager = new CMA.HmdVrInputManager(this.targetCamera, this.renderer.xr);
+                this.inputManager.addControllersToScene(this.guiScene);
+                break;
+        }        
+
+        if (this.renderer.xr.enabled) {
+            document.body.appendChild( VRButton.createButton( this.renderer ) );
+        }
     }
+    
+    loop(deltaTime) {}
 
     animate() {
         this.renderer.clear();
@@ -39,8 +58,10 @@ export class Session {
 
         this.renderer.clearDepth();
         this.renderer.render(this.guiScene, this.targetCamera);
-
+        
         const deltaTime = this.clock.getDelta();
+        this.inputManager.update(deltaTime);
+        ThreeMeshUI.update();
         this.loop(deltaTime);
     }
 

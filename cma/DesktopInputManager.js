@@ -54,8 +54,8 @@ export class DesktopInputManager extends InputManager {
 
             this.dispatchEvent({
                 type: "selectdown",
-                posX: x,
-                posY: y,
+                // posX: x,
+                // posY: y,
             });
         });
 
@@ -65,8 +65,8 @@ export class DesktopInputManager extends InputManager {
 
             this.dispatchEvent({
                 type: "selectup",
-                posX: x,
-                posY: y,
+                // posX: x,
+                // posY: y,
             });
         });
 
@@ -80,7 +80,12 @@ export class DesktopInputManager extends InputManager {
     }
 
     update(deltaTime) {
-        super.update(deltaTime);
+        //super.update(deltaTime);
+        this.raycaster.setFromCamera(
+            new THREE.Vector2(this.selectorX, this.selectorY),
+            this.targetTransform
+        );
+        this.handleRaycast();
 
         const speedDelta = deltaTime * 10;
         this.targetVelocity.set(0, 0, 0);
