@@ -43,7 +43,9 @@ export class Session {
                 this.inputManager = new CMA.HmdVrInputManager(this.targetCamera, this.renderer.xr);
                 this.inputManager.addControllersToScene(this.guiScene);
                 break;
-        }        
+        }
+
+        //this.inputManager.raycastTargets.push(this.guiScene);
 
         if (this.renderer.xr.enabled) {
             document.body.appendChild( VRButton.createButton( this.renderer ) );

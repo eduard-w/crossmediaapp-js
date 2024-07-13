@@ -6,6 +6,7 @@ import FontJSON from "./public/fonts/Roboto-msdf.json";
 import FontImage from "./public/fonts/Roboto-msdf.png";
 
 let session = new CMA.Session("vr-6dof");
+// let session = new CMA.Session("desktop");
 session.start();
 
 // window.addEventListener('touchstart', (event) => {
@@ -42,7 +43,6 @@ container.add(
     })
 );
 container.position.set(0, 0, -1);
-session.targetCamera.add(container);
 
 const buttonOptions = {
     width: 0.4,
@@ -66,7 +66,25 @@ button1.addEventListener("click", (event) => {
 
 button2.addEventListener("click", (event) => {
     console.log("button press 2");
+    session.inputManager.toggleMenu();
 });
 
 container.add(button1, button2);
-session.inputManager.raycastTargets.push(button1, button2);
+
+let menuContainer = container;
+session.inputManager.raycastTargetsGui.push(button1,button2);
+
+session.inputManager.addEventListener("togglemenu", (event) => {
+    if (event.isEnabled) {
+        session.inputManager.raycastTargets = session.inputManager.raycastTargetsGui;
+        session.targetCamera.add(menuContainer);
+        //session.inputManager.raycastTargets.push(button1, button2);
+    }
+    else {
+        session.inputManager.raycastTargets = session.inputManager.raycastTargetsWorld;
+        session.targetCamera.remove(menuContainer);
+        //session.inputManager.raycastTargets = session.inputManager.raycastTargets.filter(target => target !== button1 && target !== button2);
+    }
+});
+
+

@@ -8,24 +8,26 @@ export class DesktopInputManager extends InputManager {
         this.keyStates = {};
         this.targetVelocity = new THREE.Vector3();
         this.selectedObject = null;
+        this.selectorX = 0;
+        this.selectorY = 0;
 
         const clamp = (num, min, max) => Math.min(Math.max(num, min), max);
 
         document.body.addEventListener("mousemove", (event) => {
-            const x = (event.clientX / window.innerWidth) * 2 - 1;
-            const y = -(event.clientY / window.innerHeight) * 2 + 1;
-            const dX = x - this.lastX;
-            const dY = y - this.lastY;
-            this.lastX = x;
-            this.lastY = y;
+            this.selectorX = (event.clientX / window.innerWidth) * 2 - 1;
+            this.selectorY = -(event.clientY / window.innerHeight) * 2 + 1;
+            // const dX = x - this.lastX;
+            // const dY = y - this.lastY;
+            // this.lastX = x;
+            // this.lastY = y;
 
-            this.dispatchEvent({
-                type: "hover",
-                posX: x,
-                posY: y,
-                movementX: dX,
-                movementY: dY,
-            });
+            // this.dispatchEvent({
+            //     type: "hover",
+            //     posX: x,
+            //     posY: y,
+            //     movementX: dX,
+            //     movementY: dY,
+            // });
 
             if (document.pointerLockElement === document.body) {
                 this.targetTransform.rotation.x = clamp(
@@ -47,6 +49,12 @@ export class DesktopInputManager extends InputManager {
         //         posY: y,
         //     })
         // });
+
+        document.addEventListener("click", (event) => {
+            if (!this.isMenuEnabled) {
+                document.body.requestPointerLock();
+            }
+        });
 
         window.addEventListener("pointerdown", (event) => {
             const x = (event.clientX / window.innerWidth) * 2 - 1;
@@ -76,6 +84,25 @@ export class DesktopInputManager extends InputManager {
 
         document.addEventListener("keyup", (event) => {
             this.keyStates[event.code] = false;
+
+            if (event.code === "KeyQ") {
+                this.toggleMenu();
+            }
+    
+        });
+    }
+
+    toggleMenu() {
+        this.isMenuEnabled = !this.isMenuEnabled;
+        if (this.isMenuEnabled) {
+            document.exitPointerLock();
+        }
+        else {
+            document.body.requestPointerLock();
+        }
+        this.dispatchEvent({
+            type: "togglemenu",
+            isEnabled: this.isMenuEnabled,
         });
     }
 
@@ -124,10 +151,6 @@ export class DesktopInputManager extends InputManager {
             this.targetVelocity.add(
                 this.upDirection.clone().multiplyScalar(-speedDelta)
             );
-        }
-
-        if (this.keyStates["KeyX"]) {
-            document.body.requestPointerLock();
         }
 
         this.targetTransform.position.add(this.targetVelocity);

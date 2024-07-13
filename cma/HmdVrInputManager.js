@@ -25,6 +25,7 @@ export class HmdVrInputManager extends InputManager {
             );
         }
 		this.button0_pressed = false;
+        this.button0_hold_time = null;
     }
 
     addControllersToScene(scene) {
@@ -75,6 +76,14 @@ export class HmdVrInputManager extends InputManager {
         }
     }
 
+    toggleMenu() {
+        this.isMenuEnabled = !this.isMenuEnabled;
+        this.dispatchEvent({
+            type: "togglemenu",
+            isEnabled: this.isMenuEnabled,
+        });
+    }
+
     update(deltaTime) {
 
         if (
@@ -100,11 +109,18 @@ export class HmdVrInputManager extends InputManager {
                 this.dispatchEvent({
 					type: "selectdown",
 				});
+                this.button0_hold_time = performance.now();
             }
 			if (!gamepad.buttons[0].pressed && this.button0_pressed) {
                 this.dispatchEvent({
 					type: "selectup",
 				});
+                this.button0_hold_time = null;
+            }
+            // hold for 2000 milliseconds
+            if (this.button0_hold_time && performance.now() - this.button0_hold_time > 2000) {
+                this.toggleMenu();
+                this.button0_hold_time = null;
             }
 
 			this.button0_pressed = gamepad.buttons[0].pressed;

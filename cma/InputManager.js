@@ -2,8 +2,14 @@ import * as THREE from "three";
 
 export class InputManager extends THREE.EventDispatcher {
     /* 
-    Events:
-    - hover
+    Input Manager Events:
+    - selectup
+    - selectdown
+    - togglemenu
+
+    Raycast Target Events:
+    - hoverup
+    - hoverdown
     - selectup
     - selectdown
     */
@@ -12,18 +18,21 @@ export class InputManager extends THREE.EventDispatcher {
         super();
 
         this.targetTransform = targetTransform;
-        this.lastX = 0.0;
-        this.lastY = 0.0;
+        // this.lastX = 0.0;
+        // this.lastY = 0.0;
         this.raycaster = new THREE.Raycaster();
+        this.raycastTargetsWorld = [];
+        this.raycastTargetsGui = [];
         this.raycastTargets = [];
         this.upDirection = new THREE.Vector3(0, 1, 0);
         this.isSelectorDown = false;
         this.selectedObject = null;
+        this.isMenuEnabled = false;
 
-        this.addEventListener("hover", (event) => {
-            this.selectorX = event.posX;
-            this.selectorY = event.posY;
-        });
+        // this.addEventListener("hover", (event) => {
+        //     this.selectorX = event.posX;
+        //     this.selectorY = event.posY;
+        // });
         this.addEventListener("selectdown", (event) => {
             this.isSelectorDown = true;
             if (this.selectedObject) {
@@ -71,6 +80,7 @@ export class InputManager extends THREE.EventDispatcher {
         if (intersect) {
             if (intersect.object !== this.selectedObject) {
                 if (this.selectedObject) {
+                    
                     this.selectedObject.dispatchEvent({
                         type: "hoverup",
                     });
@@ -86,6 +96,9 @@ export class InputManager extends THREE.EventDispatcher {
             });
             this.selectedObject = null;
         }        
+    }
+
+    toggleMenu() {
     }
 
     update(deltaTime) {
