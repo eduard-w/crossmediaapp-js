@@ -2,7 +2,7 @@ import * as THREE from "three";
 import * as CMA from "./Cma.js";
 import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
 import ThreeMeshUI from "three-mesh-ui";
-import { VRButton } from 'three/addons/webxr/VRButton.js';
+import { VRButton } from "three/addons/webxr/VRButton.js";
 
 export class Session {
     constructor(sessionMode) {
@@ -34,13 +34,18 @@ export class Session {
         ambientLight.castShadow = true;
         this.worldScene.add(ambientLight);
 
-        switch(this.sessionMode) {
+        switch (this.sessionMode) {
             case "desktop":
-                this.inputManager = new CMA.DesktopInputManager(this.targetCamera);
+                this.inputManager = new CMA.DesktopInputManager(
+                    this.targetCamera
+                );
                 break;
             case "vr-6dof":
                 this.renderer.xr.enabled = true;
-                this.inputManager = new CMA.HmdVrInputManager(this.targetCamera, this.renderer.xr);
+                this.inputManager = new CMA.HmdVrInputManager(
+                    this.targetCamera,
+                    this.renderer.xr
+                );
                 this.inputManager.addControllersToScene(this.guiScene);
                 break;
         }
@@ -48,34 +53,46 @@ export class Session {
         //this.inputManager.raycastTargets.push(this.guiScene);
 
         if (this.renderer.xr.enabled) {
-            document.body.appendChild( VRButton.createButton( this.renderer ) );
+            document.body.appendChild(VRButton.createButton(this.renderer));
         }
     }
-    
+
     loop(deltaTime) {}
 
-    animate() {
+    drawFrame(time, frame) {
         this.renderer.clear();
         this.renderer.render(this.worldScene, this.targetCamera);
 
         this.renderer.clearDepth();
         this.renderer.render(this.guiScene, this.targetCamera);
-        
+
         const deltaTime = this.clock.getDelta();
-        this.inputManager.update(deltaTime);
+        this.inputManager.update(deltaTime, frame);
         ThreeMeshUI.update();
-        this.loop(deltaTime);
     }
 
     start() {
         const loader = new GLTFLoader();
         const shiba = "./public/shiba_model/scene.gltf";
-        const apartment = "./public/apartment_v2/apartment.glb";
+        const apartment = "./public/apartment_v3/apartment.gltf";
 
         loader.load(
             apartment,
             function (gltf) {
                 this.worldScene.add(gltf.scene);
+                this.worldScene.traverse((obj) => {
+                    if (obj.material && obj.material.transparent == false) {
+                        this.inputManager.raycastTargetsWorld.push(obj);
+                    }
+                    if (obj.userData.tags && obj.userData.tags == "walkable") {
+                        obj.material.transparent = true;
+                        obj.material.opacity = 0.0;
+                        obj.material.side = THREE.DoubleSide;
+                        obj.position.y += 0.02;
+                        this.inputManager.raycastTargetsWorld.push(obj);
+                    }
+                    // this.inputManager.raycastTargetsWorld.push(obj);
+                });
             }.bind(this),
             undefined,
             function (error) {
@@ -83,6 +100,6 @@ export class Session {
             }
         );
 
-        this.renderer.setAnimationLoop(this.animate.bind(this));
+        this.renderer.setAnimationLoop(this.drawFrame.bind(this));
     }
 }

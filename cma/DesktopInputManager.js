@@ -7,7 +7,6 @@ export class DesktopInputManager extends InputManager {
         super(targetTransform);
         this.keyStates = {};
         this.targetVelocity = new THREE.Vector3();
-        this.selectedObject = null;
         this.selectorX = 0;
         this.selectorY = 0;
 
@@ -88,26 +87,22 @@ export class DesktopInputManager extends InputManager {
             if (event.code === "KeyQ") {
                 this.toggleMenu();
             }
-    
         });
     }
 
     toggleMenu() {
-        this.isMenuEnabled = !this.isMenuEnabled;
+        super.toggleMenu();
+
         if (this.isMenuEnabled) {
             document.exitPointerLock();
-        }
-        else {
+        } else {
             document.body.requestPointerLock();
         }
-        this.dispatchEvent({
-            type: "togglemenu",
-            isEnabled: this.isMenuEnabled,
-        });
     }
 
-    update(deltaTime) {
-        //super.update(deltaTime);
+    update(deltaTime, frame) {
+        // frame argument is undefined in desktop mode
+
         this.raycaster.setFromCamera(
             new THREE.Vector2(this.selectorX, this.selectorY),
             this.targetTransform

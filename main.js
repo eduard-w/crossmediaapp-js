@@ -72,19 +72,18 @@ button2.addEventListener("click", (event) => {
 container.add(button1, button2);
 
 let menuContainer = container;
-session.inputManager.raycastTargetsGui.push(button1,button2);
+session.inputManager.raycastTargetsGui.push(button1, button2);
 
 session.inputManager.addEventListener("togglemenu", (event) => {
     if (event.isEnabled) {
-        session.inputManager.raycastTargets = session.inputManager.raycastTargetsGui;
+        session.inputManager.raycastTargets =
+            session.inputManager.raycastTargetsGui;
         session.targetCamera.add(menuContainer);
         //session.inputManager.raycastTargets.push(button1, button2);
-    }
-    else {
-        session.inputManager.raycastTargets = session.inputManager.raycastTargetsWorld;
+    } else {
+        session.inputManager.raycastTargets =
+            session.inputManager.raycastTargetsWorld;
         session.targetCamera.remove(menuContainer);
         //session.inputManager.raycastTargets = session.inputManager.raycastTargets.filter(target => target !== button1 && target !== button2);
     }
 });
-
-

@@ -18,16 +18,15 @@ export class InputManager extends THREE.EventDispatcher {
         super();
 
         this.targetTransform = targetTransform;
-        // this.lastX = 0.0;
-        // this.lastY = 0.0;
         this.raycaster = new THREE.Raycaster();
         this.raycastTargetsWorld = [];
         this.raycastTargetsGui = [];
-        this.raycastTargets = [];
+        this.raycastTargets = this.raycastTargetsWorld;
         this.upDirection = new THREE.Vector3(0, 1, 0);
         this.isSelectorDown = false;
-        this.selectedObject = null;
+        this.selectedPosition = null;
         this.isMenuEnabled = false;
+        this.intersection = null;
 
         // this.addEventListener("hover", (event) => {
         //     this.selectorX = event.posX;
@@ -35,14 +34,14 @@ export class InputManager extends THREE.EventDispatcher {
         // });
         this.addEventListener("selectdown", (event) => {
             this.isSelectorDown = true;
-            if (this.selectedObject) {
-                this.selectedObject.dispatchEvent(event);
+            if (this.intersection) {
+                this.intersection.object.dispatchEvent(event);
             }
         });
         this.addEventListener("selectup", (event) => {
             this.isSelectorDown = false;
-            if (this.selectedObject) {
-                this.selectedObject.dispatchEvent(event);
+            if (this.intersection) {
+                this.intersection.object.dispatchEvent(event);
             }
         });
     }
@@ -78,29 +77,41 @@ export class InputManager extends THREE.EventDispatcher {
     handleRaycast() {
         let intersect = this.raycast();
         if (intersect) {
-            if (intersect.object !== this.selectedObject) {
-                if (this.selectedObject) {
-                    
-                    this.selectedObject.dispatchEvent({
+            if (
+                !this.intersection ||
+                intersect.object !== this.intersection.object
+            ) {
+                if (this.intersection) {
+                    this.intersection.object.dispatchEvent({
                         type: "hoverup",
                     });
                 }
-                this.selectedObject = intersect.object;
-                this.selectedObject.dispatchEvent({
+                this.intersection = intersect;
+                this.intersection.object.dispatchEvent({
                     type: "hoverdown",
                 });
             }
-        } else if (this.selectedObject !== null) {
-            this.selectedObject.dispatchEvent({
+            this.intersection = intersect;
+        } else if (this.intersection !== null) {
+            this.intersection.object.dispatchEvent({
                 type: "hoverup",
             });
-            this.selectedObject = null;
-        }        
+            this.intersection = null;
+        }
     }
 
     toggleMenu() {
+        this.isMenuEnabled = !this.isMenuEnabled;
+        this.dispatchEvent({
+            type: "togglemenu",
+            isEnabled: this.isMenuEnabled,
+        });
+        if (this.isMenuEnabled) {
+            this.raycastTargets = this.raycastTargetsGui;
+        } else {
+            this.raycastTargets = this.raycastTargetsWorld;
+        }
     }
 
-    update(deltaTime) {
-    }
+    update(deltaTime, frame) {}
 }
