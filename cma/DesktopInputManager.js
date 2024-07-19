@@ -3,8 +3,8 @@ import * as THREE from "three";
 import { InputManager } from "./InputManager";
 
 export class DesktopInputManager extends InputManager {
-    constructor(targetTransform) {
-        super(targetTransform);
+    constructor(targetTransform, raycastHelper) {
+        super(targetTransform, raycastHelper);
         this.keyStates = {};
         this.targetVelocity = new THREE.Vector3();
         this.selectorX = 0;
@@ -103,7 +103,7 @@ export class DesktopInputManager extends InputManager {
     update(deltaTime, frame) {
         // frame argument is undefined in desktop mode
 
-        this.raycaster.setFromCamera(
+        this.raycastHelper.raycaster.setFromCamera(
             new THREE.Vector2(this.selectorX, this.selectorY),
             this.targetTransform
         );

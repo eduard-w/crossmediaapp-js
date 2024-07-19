@@ -4,14 +4,16 @@ import { InputManager } from "./InputManager";
 import { XRControllerModelFactory } from "three/addons/webxr/XRControllerModelFactory.js";
 
 export class HmdVrInputManager extends InputManager {
-    constructor(targetTransform, xr) {
-        super(targetTransform);
+    constructor(targetTransform, raycastHelper, xr) {
+        super(targetTransform, raycastHelper);
         this.xr = xr;
         this.xr.addEventListener(
             "sessionstart",
-            () => (this.baseReferenceSpace = this.xr.getReferenceSpace())
+            () => ( this.xr.getSession().requestReferenceSpace("local-floor").then((refSpace) => {
+                this.baseReferenceSpace = refSpace;
+            }))
         );
-        this.baseReferenceSpace = this.xr.getReferenceSpace();
+        this.baseReferenceSpace = null;
         this.controllers = [this.xr.getController(0), this.xr.getController(1)];
         this.activeController = this.controllers[1];
         for (let controller of this.controllers) {
@@ -109,10 +111,10 @@ export class HmdVrInputManager extends InputManager {
             dirMat
                 .identity()
                 .extractRotation(this.activeController.matrixWorld);
-            this.raycaster.ray.origin.setFromMatrixPosition(
+            this.raycastHelper.raycaster.ray.origin.setFromMatrixPosition(
                 this.activeController.matrixWorld
             );
-            this.raycaster.ray.direction.set(0, 0, -1).applyMatrix4(dirMat);
+            this.raycastHelper.raycaster.ray.direction.set(0, 0, -1).applyMatrix4(dirMat);
             this.handleRaycast();
 
             if (this.isFloorTargeted()) {

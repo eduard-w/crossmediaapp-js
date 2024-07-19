@@ -5,9 +5,9 @@ import ThreeMeshUI from "three-mesh-ui";
 import FontJSON from "./public/fonts/Roboto-msdf.json";
 import FontImage from "./public/fonts/Roboto-msdf.png";
 
-let session = new CMA.Session("vr-6dof");
+let session = new CMA.Session();
 // let session = new CMA.Session("desktop");
-session.start();
+//session.start();
 
 // window.addEventListener('touchstart', (event) => {
 //     selectState = true;
@@ -20,6 +20,11 @@ session.start();
 //     mouse.x = null;
 //     mouse.y = null;
 // });
+
+// light
+const ambientLight = new THREE.AmbientLight(0xffffff, 0.9);
+ambientLight.castShadow = true;
+session.worldScene.add(ambientLight);
 
 const container = new ThreeMeshUI.Block({
     width: 1.3,
@@ -72,18 +77,16 @@ button2.addEventListener("click", (event) => {
 container.add(button1, button2);
 
 let menuContainer = container;
-session.inputManager.raycastTargetsGui.push(button1, button2);
+session.registerUi(button1);
+session.registerUi(button2);
 
-session.inputManager.addEventListener("togglemenu", (event) => {
-    if (event.isEnabled) {
-        session.inputManager.raycastTargets =
-            session.inputManager.raycastTargetsGui;
-        session.targetCamera.add(menuContainer);
-        //session.inputManager.raycastTargets.push(button1, button2);
-    } else {
-        session.inputManager.raycastTargets =
-            session.inputManager.raycastTargetsWorld;
-        session.targetCamera.remove(menuContainer);
-        //session.inputManager.raycastTargets = session.inputManager.raycastTargets.filter(target => target !== button1 && target !== button2);
-    }
+session.addEventListener("started", (event) => {
+    session.inputManager.addEventListener("togglemenu", (event) => {
+        if (event.isEnabled) {
+            session.targetCamera.add(menuContainer);
+        } else {
+            session.targetCamera.remove(menuContainer);
+        }
+    });
 });
+
