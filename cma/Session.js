@@ -1,16 +1,16 @@
 import * as THREE from "three";
 import * as CMA from "./Cma.js";
-import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
 import ThreeMeshUI from "three-mesh-ui";
-import { VRButton } from "three/addons/webxr/VRButton.js";
-import { ARButton } from "three/addons/webxr/ARButton.js";
+import isOnMobile from "./Utils.js";
 
 export class Session extends THREE.EventDispatcher {
     constructor() {
         super();
 
-        this.worldScene = new THREE.Scene();
-        this.guiScene = new THREE.Scene();
+        // setup scenes manually
+        this.worldScene = null;
+        this.guiScene = null;
+
         this.clock = new THREE.Clock();
         this.raycastHelper = new CMA.RaycastHelper();
 
@@ -24,7 +24,18 @@ export class Session extends THREE.EventDispatcher {
         this.targetCamera.rotation.order = "YXZ";
         this.targetCamera.position.z = 0;
         this.targetCamera.position.y = 1;
-        this.guiScene.add(this.targetCamera);
+
+        this.appMenu = new CMA.AppMenu();
+        this.raycastHelper.registerObjectInGui(this.appMenu);
+        this.appMenu.buttonClose.addEventListener('click', (event) => {
+            this.inputManager.toggleMenu();
+        });
+        this.appMenu.buttonRestart.addEventListener('click', (event) => {
+            this.reloadScene();
+        });
+        this.appMenu.buttonQuit.addEventListener('click', (event) => {
+            this.quit();
+        });
 
         // renderer
         this.renderer = new THREE.WebGLRenderer();
@@ -33,65 +44,148 @@ export class Session extends THREE.EventDispatcher {
         this.renderer.autoClear = false;
         document.body.appendChild(this.renderer.domElement);
 
-        this.launchMenu = new CMA.LaunchMenu(document.body);
-
-        this.launchMenu.desktopButton.addEventListener('click', (event) => {
-            this.inputManager = new CMA.DesktopInputManager(
-                this.targetCamera, this.raycastHelper
-            );
-            this.start();
-            
-        });
+        // TODO: mobile check
+        this.hasTouchScreen = isOnMobile();
+        // if ("maxTouchPoints" in navigator) {
+        //     hasTouchScreen = navigator.maxTouchPoints > 0;
+        // }        
 
         this.sessionOptions = {
-            optionalFeatures: [
-                'local-floor',
-                'bounded-floor',
-                'layers',
-            ],
+            optionalFeatures: ["local-floor", "bounded-floor", "layers", "dom-overlay"],
         };
-
-        this.launchMenu.vrButton.addEventListener('click', (event) => {
-            this.renderer.xr.enabled = true;
-            navigator.xr.requestSession( 'immersive-vr', this.sessionOptions ).then((session) => {
-                this.renderer.xr.setSession(session);
-            });
-            this.inputManager = new CMA.HmdVrInputManager(
-                this.targetCamera,
-                this.raycastHelper,
-                this.renderer.xr
-            );
-            this.inputManager.addControllersToScene(this.guiScene);
-            this.start();
+        
+        this.launchMenu = new CMA.LaunchMenu(document.body);
+        this.launchMenu.desktopButton.addEventListener("click", (event) => {
+            this.launchDesktopSession();
         });
-
-        this.launchMenu.arButton.addEventListener('click', (event) => {
-            this.renderer.xr.enabled = true;
-            navigator.xr.requestSession( 'immersive-ar', this.sessionOptions ).then((session) => {
-                this.renderer.xr.setSession(session);
-            });
-            this.inputManager = new CMA.HmdVrInputManager(
-                this.targetCamera,
-                this.raycastHelper,
-                this.renderer.xr
-            );
-            this.inputManager.addControllersToScene(this.guiScene);
-            this.start();
+        this.launchMenu.vrButton.addEventListener("click", (event) => {
+            this.launchVrSession();
         });
+        this.launchMenu.arButton.addEventListener("click", (event) => {
+            this.launchArSession();
+        });
+    }
 
+    setWorldScene(scene) {
+        this.worldScene = scene;
         this.renderer.clear();
         this.renderer.render(this.worldScene, this.targetCamera);
     }
 
-    registerUi(object) {
-        this.raycastHelper.raycastTargetsUi.push(object);
+    setGuiScene(scene) {
+        this.guiScene = scene;
+        this.guiScene.add(this.targetCamera);
     }
 
-    registerObject(object) {
-        this.raycastHelper.raycastTargetsWorld.push(object);
+    launchDesktopSession() {
+        this.inputManager = new CMA.DesktopInputManager(
+            this.targetCamera,
+            this.raycastHelper
+        );
+        this.setupFollowMenu();
+        this.start();
     }
 
+    launchVrSession() {
+        this.renderer.xr.enabled = true;
+        navigator.xr
+            .requestSession("immersive-vr", this.sessionOptions)
+            .then((session) => {
+                this.renderer.xr.setSession(session);
+            });
+        if (this.hasTouchScreen) {
+            // Mobile
+            this.inputManager = new CMA.MobileVrInputManager(
+                this.targetCamera,
+                this.raycastHelper,
+                this.renderer.xr,
+                this.renderer.domElement
+            );
+            this.setupInWorldMenu();
+        } else {
+            // HMD
+            this.inputManager = new CMA.HmdVrInputManager(
+                this.targetCamera,
+                this.raycastHelper,
+                this.renderer.xr
+            );
+            this.setupInWorldMenu();
+        }
+        if (!this.guiScene) {
+            this.setGuiScene(new THREE.Scene());
+        }
+        this.inputManager.mode = "immersive-vr";
+        this.inputManager.addControllersToScene(this.guiScene);
+        this.start();
+    }
 
+    launchArSession() {
+        this.renderer.xr.enabled = true;
+
+        if (this.hasTouchScreen) {
+            // dom overlay
+            this.overlay = document.createElement( 'div' );
+            this.overlay.setAttribute('id', 'overlay');
+            //this.overlay.style.display = 'none';
+            document.body.appendChild( this.overlay );
+            this.sessionOptions.domOverlay = { root: this.overlay };            
+        }
+
+        navigator.xr
+            .requestSession("immersive-ar", this.sessionOptions)
+            .then((session) => {
+                this.renderer.xr.setSession(session);
+            });
+        if (this.hasTouchScreen) {
+            // Mobile
+            this.inputManager = new CMA.MobileArInputManager(
+                this.targetCamera,
+                this.raycastHelper,
+                this.renderer.xr,
+                this.renderer.domElement
+            );
+            this.setupFollowMenu();
+        } else {
+            // HMD
+            this.inputManager = new CMA.HmdVrInputManager(
+                this.targetCamera,
+                this.raycastHelper,
+                this.renderer.xr
+            );
+            this.setupInWorldMenu();      
+        }
+        if (!this.guiScene) {
+            this.setGuiScene(new THREE.Scene());
+        }
+        this.inputManager.mode = "immersive-ar";
+        this.inputManager.addControllersToScene(this.guiScene);
+        this.start();
+    }
+
+    setupFollowMenu() {
+        this.appMenu.position.set(0, 0, -2);
+        this.inputManager.addEventListener("togglemenu", (event) => {
+            if (event.isEnabled) {
+                this.targetCamera.add(this.appMenu);
+            } else {
+                this.targetCamera.remove(this.appMenu);
+            }
+        });
+    }
+
+    setupInWorldMenu() {
+        this.inputManager.addEventListener("togglemenu", (event) => {
+            if (event.isEnabled) {
+                const direction = new THREE.Vector3();
+                this.targetCamera.getWorldDirection(direction);
+                this.appMenu.position.copy(this.targetCamera.position).add(direction.multiplyScalar(2));
+                this.appMenu.lookAt(this.targetCamera.position);
+                this.guiScene.add(this.appMenu);
+            } else {
+                this.guiScene.remove(this.appMenu);
+            }
+        });
+    }
 
     loop(deltaTime) {}
 
@@ -105,41 +199,22 @@ export class Session extends THREE.EventDispatcher {
         const deltaTime = this.clock.getDelta();
         this.inputManager.update(deltaTime, frame);
         ThreeMeshUI.update();
+        this.loop(deltaTime);
     }
 
     start() {
-        const loader = new GLTFLoader();
-        const shiba = "./public/shiba_model/scene.gltf";
-        const apartment = "./public/apartment_v3/apartment.gltf";
-
-        loader.load(
-            apartment,
-            function (gltf) {
-                this.worldScene.add(gltf.scene);
-                this.worldScene.traverse((obj) => {
-                    if (obj.material && obj.material.transparent == false) {
-                        this.registerObject(obj,);
-                    }
-                    if (obj.userData.tags && obj.userData.tags == "walkable") {
-                        obj.material.transparent = true;
-                        obj.material.opacity = 0.0;
-                        obj.material.side = THREE.DoubleSide;
-                        obj.position.y += 0.02;
-                        this.registerObject(obj,);
-                    }
-                    // this.inputManager.raycastTargetsWorld.push(obj);
-                });
-            }.bind(this),
-            undefined,
-            function (error) {
-                console.error(error);
-            }
-        );
-
         this.renderer.setAnimationLoop(this.drawFrame.bind(this));
-
         this.dispatchEvent({
-            type: 'started'
+            type: "started",
         });
+        console.log("session started");
+    }
+
+    reloadScene() {
+        // TODO restart scene
+    }
+
+    quit() {
+        this.renderer.xr.getSession().end();
     }
 }

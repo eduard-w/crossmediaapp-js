@@ -83,12 +83,21 @@ export class InputManager extends THREE.EventDispatcher {
         }
     }
 
+    isFloorTargeted() {
+        return (
+            this.intersection &&
+            this.intersection.object.userData.tags &&
+            this.intersection.object.userData.tags[0] == "floor"
+        );
+    }
+
     toggleMenu() {
         this.isMenuEnabled = !this.isMenuEnabled;
         this.dispatchEvent({
             type: "togglemenu",
             isEnabled: this.isMenuEnabled,
         });
+
         if (this.isMenuEnabled) {
             this.raycastHelper.targetUi();
         } else {
