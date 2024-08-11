@@ -1,7 +1,7 @@
 import * as THREE from "three";
 import * as CMA from "./Cma.js";
 import ThreeMeshUI from "three-mesh-ui";
-import isOnMobile from "./Utils.js";
+import { isOnMobile } from "./Utils.js";
 
 export class Session extends THREE.EventDispatcher {
     constructor() {
@@ -78,6 +78,7 @@ export class Session extends THREE.EventDispatcher {
     }
 
     launchDesktopSession() {
+        this.setupDomOverlay();
         this.inputManager = new CMA.DesktopInputManager(
             this.targetCamera,
             this.raycastHelper
@@ -123,12 +124,7 @@ export class Session extends THREE.EventDispatcher {
         this.renderer.xr.enabled = true;
 
         if (this.hasTouchScreen) {
-            // dom overlay
-            this.overlay = document.createElement( 'div' );
-            this.overlay.setAttribute('id', 'overlay');
-            //this.overlay.style.display = 'none';
-            document.body.appendChild( this.overlay );
-            this.sessionOptions.domOverlay = { root: this.overlay };            
+            this.setupDomOverlay();
         }
 
         navigator.xr
@@ -160,6 +156,14 @@ export class Session extends THREE.EventDispatcher {
         this.inputManager.mode = "immersive-ar";
         this.inputManager.addControllersToScene(this.guiScene);
         this.start();
+    }
+
+    setupDomOverlay() {
+        this.overlay = document.createElement( 'div' );
+        this.overlay.setAttribute('id', 'overlay');
+        //this.overlay.style.display = 'none';
+        document.body.appendChild( this.overlay );
+        this.sessionOptions.domOverlay = { root: this.overlay };     
     }
 
     setupFollowMenu() {

@@ -1,5 +1,6 @@
 import * as THREE from "three";
 import * as CMA from "./Cma.js";
+import { isObjectFloor } from "./Utils.js";
 
 export class RaycastHelper {
 
@@ -10,7 +11,7 @@ export class RaycastHelper {
         this.raycastTargets = this.raycastTargetsWorld;
 	}
 
-	raycast() {
+	raycastClosest() {
         return [...this.raycastTargets].reduce((closestIntersection, obj) => {
             const intersection = this.raycaster.intersectObject(obj, true);
             if (!intersection[0]) return closestIntersection;
@@ -23,6 +24,20 @@ export class RaycastHelper {
             }
             return closestIntersection;
         }, null);
+    }
+
+    raycastFloorDistance() {
+        let intersections = this.raycaster.intersectObjects([...this.raycastTargets], true);
+        let closestInteresction = null;
+        for (let entry of intersections) {
+            if (isObjectFloor(entry.object)) {
+                closestInteresction = entry.object;
+            }
+        }
+        if (closestInteresction) {
+            return this.raycaster.intersectObject(closestInteresction, false)[0].distance;
+        }
+        return Infinity;
     }
 
     registerObjectInGui(object) {

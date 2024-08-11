@@ -1,4 +1,5 @@
 import * as THREE from "three";
+import { isObjectFloor } from "./Utils.js";
 
 export class InputManager extends THREE.EventDispatcher {
     /* 
@@ -58,7 +59,7 @@ export class InputManager extends THREE.EventDispatcher {
     }
 
     handleRaycast() {
-        let intersect = this.raycastHelper.raycast();
+        let intersect = this.raycastHelper.raycastClosest();
         if (intersect) {
             if (
                 !this.intersection ||
@@ -84,11 +85,15 @@ export class InputManager extends THREE.EventDispatcher {
     }
 
     isFloorTargeted() {
-        return (
-            this.intersection &&
-            this.intersection.object.userData.tags &&
-            this.intersection.object.userData.tags[0] == "floor"
-        );
+        if (this.intersection && this.intersection.object) {
+            return isObjectFloor(this.intersection.object);
+        }
+        return false;
+        // return (
+        //     this.intersection &&
+        //     this.intersection.object.userData.tags &&
+        //     this.intersection.object.userData.tags[0] == "floor"
+        // );
     }
 
     toggleMenu() {

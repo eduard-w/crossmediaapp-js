@@ -1,4 +1,4 @@
-let isOnMobile = function() {
+export function isOnMobile() {
 	// http://detectmobilebrowsers.com/
 	let a = navigator.userAgent || navigator.vendor || window.opera;
 	return (
@@ -11,4 +11,11 @@ let isOnMobile = function() {
     );
 }
 
-export default isOnMobile;
+export function isObjectFloor(obj) {
+    return (
+        obj &&
+        obj.userData &&
+        obj.userData.tags &&
+        obj.userData.tags[0] == "floor"
+    );
+}
