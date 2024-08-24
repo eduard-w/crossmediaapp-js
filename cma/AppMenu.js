@@ -15,8 +15,6 @@ export class AppMenu extends ThreeMeshUI.Block {
 		);
 		this.buttonClose = AppMenu.getNewButtonClose();
 		this.add(this.buttonClose);
-		this.buttonRestart = AppMenu.getNewButtonRestart()
-		this.add(this.buttonRestart);
 		this.buttonQuit = AppMenu.getNewButtonQuit()
 		this.add(this.buttonQuit);
 	}
@@ -54,15 +52,6 @@ export class AppMenu extends ThreeMeshUI.Block {
 		button.add(new ThreeMeshUI.Text({ content: "Quit" }));
 		button.addEventListener("click", (event) => {
 			console.log("quit button");
-		});
-		return button;
-	}
-	
-	static getNewButtonRestart() {
-		const button = new CMA.Button(AppMenu.defaultButtonOptions);
-		button.add(new ThreeMeshUI.Text({ content: "Restart" }));
-		button.addEventListener("click", (event) => {
-			console.log("restart button");
 		});
 		return button;
 	}

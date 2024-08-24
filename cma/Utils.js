@@ -1,7 +1,7 @@
 export function isOnMobile() {
-	// http://detectmobilebrowsers.com/
-	let a = navigator.userAgent || navigator.vendor || window.opera;
-	return (
+    // http://detectmobilebrowsers.com/
+    let a = navigator.userAgent || navigator.vendor || window.opera;
+    return (
         /(android|bb\d+|meego).+mobile|avantgo|bada\/|blackberry|blazer|compal|elaine|fennec|hiptop|iemobile|ip(hone|od)|iris|kindle|lge |maemo|midp|mmp|mobile.+firefox|netfront|opera m(ob|in)i|palm( os)?|phone|p(ixi|re)\/|plucker|pocket|psp|series(4|6)0|symbian|treo|up\.(browser|link)|vodafone|wap|windows ce|xda|xiino/i.test(
             a
         ) ||
@@ -13,9 +13,6 @@ export function isOnMobile() {
 
 export function isObjectFloor(obj) {
     return (
-        obj &&
-        obj.userData &&
-        obj.userData.tags &&
-        obj.userData.tags[0] == "floor"
+        obj && obj.name && obj.name.toLowerCase().slice(0, 10) == "scenefloor"
     );
 }

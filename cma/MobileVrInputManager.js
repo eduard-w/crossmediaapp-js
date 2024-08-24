@@ -3,22 +3,19 @@ import * as THREE from "three";
 import { InputManager } from "./InputManager";
 
 export class MobileVrInputManager extends InputManager {
-    constructor(targetTransform, raycastHelper, xr, canvas) {
-        super(targetTransform, raycastHelper);
+    constructor(targetTransform, startPosition, raycastHelper, xr, canvas) {
+        super(targetTransform, startPosition, raycastHelper);
+
         this.xr = xr;
+		this.setupXrReferenceSpace();
+
 		this.canvas = canvas;
-        this.xr.addEventListener(
-            "sessionstart",
-            () => ( this.xr.getSession().requestReferenceSpace("local-floor").then((refSpace) => {
-                this.baseReferenceSpace = refSpace;
-            }))
-        );
-        this.baseReferenceSpace = null;
         this.marker = new THREE.Mesh(
             new THREE.CircleGeometry(0.25, 32).rotateX(-Math.PI / 2),
             new THREE.MeshBasicMaterial({ color: 0xbcbcbc })
         );
         this.button0_hold_time = null;
+		this.teleportationSelectionQueued = false;
 		this.teleportationQueued = false;
 
 		this.screenCenter = new THREE.Vector2(0,0);
@@ -33,6 +30,9 @@ export class MobileVrInputManager extends InputManager {
 					type: "selectdown",
 				});
 				this.button0_hold_time = performance.now();
+				if (this.isFloorTargeted()) {
+					this.teleportationSelectionQueued = true;
+				}
 			});
 
 			this.controller.addEventListener("selectend", () => {
@@ -41,9 +41,10 @@ export class MobileVrInputManager extends InputManager {
 				});
 				this.button0_hold_time = null;
 
-				if (this.isFloorTargeted()) {
+				if (this.isFloorTargeted() && this.teleportationSelectionQueued) {
 					this.teleportationQueued = true;
 				}
+				this.teleportationSelectionQueued = false;
 			});		
 		} else {
 			console.error("no controller found");
@@ -89,31 +90,13 @@ export class MobileVrInputManager extends InputManager {
 		}
 
 		if (this.teleportationQueued) {
-			const viewerPosition = frame.getViewerPose(
-				this.baseReferenceSpace
-			).transform.position;
-			const offsetPosition = {
-				x: -this.intersection.point.x + viewerPosition.x,
-				y: -this.intersection.point.y,
-				z: -this.intersection.point.z + viewerPosition.z,
-				w: 1,
-			};
-			const offsetRotation = new THREE.Quaternion();
-			const transform = new XRRigidTransform(
-				offsetPosition,
-				offsetRotation
-			);
-			const teleportSpaceOffset =
-				this.baseReferenceSpace.getOffsetReferenceSpace(
-					transform
-				);
-
-			this.xr.setReferenceSpace(teleportSpaceOffset);
+			this.performXrTeleportation(frame);
 			this.teleportationQueued = false;
 		}
 
 		// hold for 2000 milliseconds
 		if (
+			!this.intersection &&
 			this.button0_hold_time &&
 			performance.now() - this.button0_hold_time > 2000
 		) {

@@ -22,16 +22,12 @@ export class Session extends THREE.EventDispatcher {
             1000
         );
         this.targetCamera.rotation.order = "YXZ";
-        this.targetCamera.position.z = 0;
-        this.targetCamera.position.y = 1;
+        this.startPosition = new THREE.Vector3(0,1,0);
 
         this.appMenu = new CMA.AppMenu();
         this.raycastHelper.registerObjectInGui(this.appMenu);
         this.appMenu.buttonClose.addEventListener('click', (event) => {
             this.inputManager.toggleMenu();
-        });
-        this.appMenu.buttonRestart.addEventListener('click', (event) => {
-            this.reloadScene();
         });
         this.appMenu.buttonQuit.addEventListener('click', (event) => {
             this.quit();
@@ -44,11 +40,7 @@ export class Session extends THREE.EventDispatcher {
         this.renderer.autoClear = false;
         document.body.appendChild(this.renderer.domElement);
 
-        // TODO: mobile check
         this.hasTouchScreen = isOnMobile();
-        // if ("maxTouchPoints" in navigator) {
-        //     hasTouchScreen = navigator.maxTouchPoints > 0;
-        // }        
 
         this.sessionOptions = {
             optionalFeatures: ["local-floor", "bounded-floor", "layers", "dom-overlay"],
@@ -64,6 +56,8 @@ export class Session extends THREE.EventDispatcher {
         this.launchMenu.arButton.addEventListener("click", (event) => {
             this.launchArSession();
         });
+
+        this.mode = null;
     }
 
     setWorldScene(scene) {
@@ -81,9 +75,11 @@ export class Session extends THREE.EventDispatcher {
         this.setupDomOverlay();
         this.inputManager = new CMA.DesktopInputManager(
             this.targetCamera,
+            this.startPosition,
             this.raycastHelper
         );
         this.setupFollowMenu();
+        this.mode = "desktop";
         this.start();
     }
 
@@ -98,19 +94,23 @@ export class Session extends THREE.EventDispatcher {
             // Mobile
             this.inputManager = new CMA.MobileVrInputManager(
                 this.targetCamera,
+                this.startPosition,
                 this.raycastHelper,
                 this.renderer.xr,
                 this.renderer.domElement
             );
             this.setupInWorldMenu();
+            this.mode = "mobile-vr";
         } else {
             // HMD
             this.inputManager = new CMA.HmdVrInputManager(
                 this.targetCamera,
+                this.startPosition,
                 this.raycastHelper,
                 this.renderer.xr
             );
             this.setupInWorldMenu();
+            this.mode = "hmd-vr";
         }
         if (!this.guiScene) {
             this.setGuiScene(new THREE.Scene());
@@ -136,19 +136,23 @@ export class Session extends THREE.EventDispatcher {
             // Mobile
             this.inputManager = new CMA.MobileArInputManager(
                 this.targetCamera,
+                this.startPosition,
                 this.raycastHelper,
                 this.renderer.xr,
                 this.renderer.domElement
             );
             this.setupFollowMenu();
+            this.mode = "mobile-ar";
         } else {
             // HMD
             this.inputManager = new CMA.HmdVrInputManager(
                 this.targetCamera,
+                this.startPosition,
                 this.raycastHelper,
                 this.renderer.xr
             );
-            this.setupInWorldMenu();      
+            this.setupInWorldMenu();
+            this.mode = "hmd-ar";
         }
         if (!this.guiScene) {
             this.setGuiScene(new THREE.Scene());
@@ -161,7 +165,6 @@ export class Session extends THREE.EventDispatcher {
     setupDomOverlay() {
         this.overlay = document.createElement( 'div' );
         this.overlay.setAttribute('id', 'overlay');
-        //this.overlay.style.display = 'none';
         document.body.appendChild( this.overlay );
         this.sessionOptions.domOverlay = { root: this.overlay };     
     }
@@ -191,8 +194,6 @@ export class Session extends THREE.EventDispatcher {
         });
     }
 
-    loop(deltaTime) {}
-
     drawFrame(time, frame) {
         this.renderer.clear();
         this.renderer.render(this.worldScene, this.targetCamera);
@@ -203,7 +204,10 @@ export class Session extends THREE.EventDispatcher {
         const deltaTime = this.clock.getDelta();
         this.inputManager.update(deltaTime, frame);
         ThreeMeshUI.update();
-        this.loop(deltaTime);
+        this.dispatchEvent({
+            type: "update",
+            deltaTime: time
+        });
     }
 
     start() {
@@ -212,10 +216,6 @@ export class Session extends THREE.EventDispatcher {
             type: "started",
         });
         console.log("session started");
-    }
-
-    reloadScene() {
-        // TODO restart scene
     }
 
     quit() {

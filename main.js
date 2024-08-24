@@ -18,7 +18,7 @@ ambientLight.castShadow = true;
 worldScene.add(ambientLight);
 
 const shiba = "./public/shiba_model/scene.gltf";
-const apartment = "./public/apartment_v4/apartment.gltf";
+const apartment = "./public/apartment_v5/apartment.gltf";
 
 const objLoader = new GLTFLoader();
 function loadObject(path) {

@@ -1,4 +1,5 @@
 import * as THREE from "three";
+import ThreeMeshUI from "three-mesh-ui";
 import * as CMA from "./Cma.js";
 import { isObjectFloor } from "./Utils.js";
 
@@ -48,17 +49,45 @@ export class RaycastHelper {
         });
     }
 
+    unregisterObjectInGui(object) {
+        object.traverse((obj) => {
+            this.raycastTargetsGui.delete(obj);
+        });
+    }
+
+    registerSingleObjectInWorld(object) {
+        this.raycastTargetsWorld.add(object);
+    }
+
     registerObjectInWorld(object) {
         object.traverse((obj) => {
-            if (obj.material && obj.material.transparent == false) {
+            if (obj instanceof ThreeMeshUI.InlineBlock || obj instanceof ThreeMeshUI.Block) {
+                if (obj instanceof CMA.Button) {
+                    this.raycastTargetsWorld.add(obj);
+                } else {
+                    return;
+                }
+            }
+            else if (obj.material && obj.material.opacity > 0.0) {
                 this.raycastTargetsWorld.add(obj);
             }
-            if (obj.userData.tags && obj.userData.tags[0] == "floor") {
-                obj.material.transparent = true;
-                obj.material.opacity = 0.0;
-                obj.material.side = THREE.DoubleSide;
+            if (isObjectFloor(obj)) {
+                if (obj.material) {
+                    // obj.material.transparent = true;
+                    // obj.material.opacity = 0.0;
+                    obj.material.side = THREE.DoubleSide;                    
+                }
                 obj.position.y += 0.02;
                 this.raycastTargetsWorld.add(obj);
+            }
+        });
+    }
+
+    unregisterObjectInWorld(object) {
+        object.traverse((obj) => {
+            this.raycastTargetsWorld.delete(obj);
+            if (isObjectFloor(obj)) {
+                obj.position.y -= 0.02;
             }
         });
     }

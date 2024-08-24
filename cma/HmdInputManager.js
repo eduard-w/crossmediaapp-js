@@ -4,16 +4,12 @@ import { InputManager } from "./InputManager";
 import { XRControllerModelFactory } from "three/addons/webxr/XRControllerModelFactory.js";
 
 export class HmdVrInputManager extends InputManager {
-    constructor(targetTransform, raycastHelper, xr) {
-        super(targetTransform, raycastHelper);
+    constructor(targetTransform, startPosition, raycastHelper, xr) {
+        super(targetTransform, startPosition, raycastHelper);
+
         this.xr = xr;
-        this.xr.addEventListener(
-            "sessionstart",
-            () => ( this.xr.getSession().requestReferenceSpace("local-floor").then((refSpace) => {
-                this.baseReferenceSpace = refSpace;
-            }))
-        );
-        this.baseReferenceSpace = null;
+        this.setupXrReferenceSpace();
+
         this.controllers = [this.xr.getController(0), this.xr.getController(1)];
         this.activeController = this.controllers[1];
         for (let controller of this.controllers) {
@@ -36,8 +32,9 @@ export class HmdVrInputManager extends InputManager {
             new THREE.CircleGeometry(0.25, 32).rotateX(-Math.PI / 2),
             new THREE.MeshBasicMaterial({ color: 0xbcbcbc })
         );
-        this.button0_pressed = false;
-        this.button0_hold_time = null;
+        this.triggerPressed = false;
+        this.triggerHoldTime = null;
+        this.teleportationSelectionQueued = false;
     }
 
     addControllersToScene(scene) {
@@ -96,7 +93,6 @@ export class HmdVrInputManager extends InputManager {
                 this.activeController = newController;
                 this.pastButtonStates[i] = [];
                 for (let j=0; j<gamepad.buttons.length; j++) {
-                    //console.log(gamepad.buttons[j]);
                     this.pastButtonStates[i].push(gamepad.buttons[j].pressed);
                 }
             }            
@@ -129,52 +125,39 @@ export class HmdVrInputManager extends InputManager {
             let gamepad = this.activeController.gamepad;
 
             // primary trigger
-            if (gamepad.buttons[0].pressed && !this.button0_pressed) {
+            if (gamepad.buttons[0].pressed && !this.triggerPressed) {
                 this.dispatchEvent({
                     type: "selectdown",
                 });
-                this.button0_hold_time = performance.now();
+                
+                if (!this.intersection) {
+                    this.triggerHoldTime = performance.now();
+                }
+                else if (this.isFloorTargeted()) {
+                    this.teleportationSelectionQueued = true;
+                }
             }
-            if (!gamepad.buttons[0].pressed && this.button0_pressed) {
+            if (!gamepad.buttons[0].pressed && this.triggerPressed) {
                 this.dispatchEvent({
                     type: "selectup",
                 });
-                this.button0_hold_time = null;
+                this.triggerHoldTime = null;
                 
-
-                if (this.mode == "immersive-vr" && this.isFloorTargeted()) {
-                    const viewerPosition = frame.getViewerPose(
-                        this.baseReferenceSpace
-                    ).transform.position;
-                    const offsetPosition = {
-                        x: -this.intersection.point.x + viewerPosition.x,
-                        y: -this.intersection.point.y,
-                        z: -this.intersection.point.z + viewerPosition.z,
-                        w: 1,
-                    };
-                    const offsetRotation = new THREE.Quaternion();
-                    const transform = new XRRigidTransform(
-                        offsetPosition,
-                        offsetRotation
-                    );
-                    const teleportSpaceOffset =
-                        this.baseReferenceSpace.getOffsetReferenceSpace(
-                            transform
-                        );
-
-                    this.xr.setReferenceSpace(teleportSpaceOffset);
+                if (this.mode == "immersive-vr" && this.isFloorTargeted() && this.teleportationSelectionQueued) {
+                    this.performXrTeleportation(frame);
                 }
+                this.teleportationSelectionQueued = false;
             }
             // hold for 2000 milliseconds
             if (
-                this.button0_hold_time &&
-                performance.now() - this.button0_hold_time > 2000
+                this.triggerHoldTime &&
+                performance.now() - this.triggerHoldTime > 2000
             ) {
                 this.toggleMenu();
-                this.button0_hold_time = null;
+                this.triggerHoldTime = null;
             }
 
-            this.button0_pressed = gamepad.buttons[0].pressed;
+            this.triggerPressed = gamepad.buttons[0].pressed;
         }
     }
 }

@@ -3,15 +3,17 @@ import * as THREE from "three";
 import { InputManager } from "./InputManager";
 
 export class DesktopInputManager extends InputManager {
-    constructor(targetTransform, raycastHelper) {
-        super(targetTransform, raycastHelper);
+    constructor(targetTransform, startPosition, raycastHelper) {
+        super(targetTransform, startPosition, raycastHelper);
         this.keyStates = {};
         this.targetVelocity = new THREE.Vector3();
         this.selectorX = 0;
         this.selectorY = 0;
+        this.pastRotation = null;
         this.floorRaycaster = new THREE.Raycaster();
         this.vectorDown = new THREE.Vector3(0,-1,0);
 
+        this.targetTransform.position.copy(startPosition);
         this.setupCrosshair();
 
         const clamp = (num, min, max) => Math.min(Math.max(num, min), max);
@@ -19,24 +21,16 @@ export class DesktopInputManager extends InputManager {
         document.body.addEventListener("mousemove", (event) => {
             if (this.isMenuEnabled) {
                 this.selectorX = (event.clientX / window.innerWidth) * 2 - 1;
-                this.selectorY = -(event.clientY / window.innerHeight) * 2 + 1;                
+                this.selectorY = -(event.clientY / window.innerHeight) * 2 + 1;
+                this.dispatchEvent({
+                    type: "selectmove",
+                    x: event.movementX,
+                    y: event.movementY,
+                });
             } else {
                 this.selectorX = 0;
                 this.selectorY = 0;
             }
-
-            // const dX = x - this.lastX;
-            // const dY = y - this.lastY;
-            // this.lastX = x;
-            // this.lastY = y;
-
-            // this.dispatchEvent({
-            //     type: "hover",
-            //     posX: x,
-            //     posY: y,
-            //     movementX: dX,
-            //     movementY: dY,
-            // });
 
             if (document.pointerLockElement === document.body) {
                 this.targetTransform.rotation.x = clamp(
@@ -49,43 +43,24 @@ export class DesktopInputManager extends InputManager {
         });
 
         // document.addEventListener("click", (event) => {
-        //     const x = ( event.clientX / window.innerWidth ) * 2 - 1;
-        //     const y = -( event.clientY / window.innerHeight ) * 2 + 1;
-
-        //     this.dispatchEvent({
-        //         type: 'select',
-        //         posX: x,
-        //         posY: y,
-        //     })
+        //     if (!this.isMenuEnabled) {
+        //         document.body.requestPointerLock();
+        //     }
         // });
 
-        document.addEventListener("click", (event) => {
-            if (!this.isMenuEnabled) {
-                document.body.requestPointerLock();
-            }
-        });
-
         window.addEventListener("pointerdown", (event) => {
-
-            const x = (event.clientX / window.innerWidth) * 2 - 1;
-            const y = -(event.clientY / window.innerHeight) * 2 + 1;
-
             this.dispatchEvent({
-                type: "selectdown",
-                // posX: x,
-                // posY: y,
+                type: "selectdown"
             });
         });
 
         window.addEventListener("pointerup", (event) => {
-            const x = (event.clientX / window.innerWidth) * 2 - 1;
-            const y = -(event.clientY / window.innerHeight) * 2 + 1;
-
             this.dispatchEvent({
-                type: "selectup",
-                // posX: x,
-                // posY: y,
+                type: "selectup"
             });
+            if (!this.isMenuEnabled) {
+                document.body.requestPointerLock();
+            }
         });
 
         document.addEventListener("keydown", (event) => {
@@ -132,8 +107,6 @@ export class DesktopInputManager extends InputManager {
     }
 
     update(deltaTime, frame) {
-        // frame argument is undefined in desktop mode
-
         this.raycastHelper.raycaster.setFromCamera(
             new THREE.Vector2(this.selectorX, this.selectorY),
             this.targetTransform
@@ -167,18 +140,6 @@ export class DesktopInputManager extends InputManager {
             );
         }
 
-        // if (this.keyStates["Space"]) {
-        //     this.targetVelocity.add(
-        //         this.upDirection.clone().multiplyScalar(speedDelta)
-        //     );
-        // }
-
-        // if (this.keyStates["ShiftLeft"]) {
-        //     this.targetVelocity.add(
-        //         this.upDirection.clone().multiplyScalar(-speedDelta)
-        //     );
-        // }
-
         if (this.targetVelocity.length() > 0) {
             let onFloor = true;
             for (let i of [
@@ -200,7 +161,6 @@ export class DesktopInputManager extends InputManager {
     isOutsideFloor(position) {
         this.raycastHelper.raycaster.set(position, this.vectorDown);
         let distance = this.raycastHelper.raycastFloorDistance();
-        console.log(distance);
         return distance > 2;
     }
 }

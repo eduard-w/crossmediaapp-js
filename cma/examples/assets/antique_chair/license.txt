@@ -1,0 +1,11 @@
+Model Information:
+* title:	Antique Chair
+* source:	https://sketchfab.com/3d-models/antique-chair-5dfe7d704a1d4ad6be5f4a77fbb488d3
+* author:	Erika Dejnes [YuYuna Art] (https://sketchfab.com/E.Dejnes)
+
+Model License:
+* license type:	CC-BY-NC-4.0 (http://creativecommons.org/licenses/by-nc/4.0/)
+* requirements:	Author must be credited. No commercial use.
+
+If you use this 3D model in your project be sure to copy paste this credit wherever you share it:
+This work is based on "Antique Chair" (https://sketchfab.com/3d-models/antique-chair-5dfe7d704a1d4ad6be5f4a77fbb488d3) by Erika Dejnes [YuYuna Art] (https://sketchfab.com/E.Dejnes) licensed under CC-BY-NC-4.0 (http://creativecommons.org/licenses/by-nc/4.0/)

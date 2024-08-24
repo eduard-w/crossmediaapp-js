@@ -6,6 +6,7 @@ export class InputManager extends THREE.EventDispatcher {
     Input Manager Events:
     - selectup
     - selectdown
+    - selectmove
     - togglemenu
 
     Raycast Target Events:
@@ -15,17 +16,20 @@ export class InputManager extends THREE.EventDispatcher {
     - selectdown
     */
 
-    constructor(targetTransform, raycastHelper) {
+    constructor(targetTransform, startPosition, raycastHelper) {
         super();
 
         this.targetTransform = targetTransform;
+        this.startPosition = startPosition;
         this.raycastHelper = raycastHelper;
         
         this.upDirection = new THREE.Vector3(0, 1, 0);
+        this.zeroRotation = new THREE.Quaternion(0, 0, 0, 1);
         this.isSelectorDown = false;
         this.selectedPosition = null;
         this.isMenuEnabled = false;
         this.intersection = null;
+        this.xr = null;
 
         // this.addEventListener("hover", (event) => {
         //     this.selectorX = event.posX;
@@ -82,6 +86,19 @@ export class InputManager extends THREE.EventDispatcher {
             });
             this.intersection = null;
         }
+
+        let currentRotation = this.raycastHelper.raycaster.ray.direction.clone().normalize();
+        if (this.pastRotation == null) {
+            this.pastRotation = currentRotation.clone();
+        }
+        let rotationDelta = new THREE.Quaternion().setFromUnitVectors(this.pastRotation, currentRotation);
+        if (!rotationDelta.equals(this.zeroRotation)) {
+            this.dispatchEvent({
+                type: "selectmove",
+                movement: rotationDelta,
+            });
+        }
+        this.pastRotation = currentRotation.clone();
     }
 
     isFloorTargeted() {
@@ -89,11 +106,6 @@ export class InputManager extends THREE.EventDispatcher {
             return isObjectFloor(this.intersection.object);
         }
         return false;
-        // return (
-        //     this.intersection &&
-        //     this.intersection.object.userData.tags &&
-        //     this.intersection.object.userData.tags[0] == "floor"
-        // );
     }
 
     toggleMenu() {
@@ -108,6 +120,53 @@ export class InputManager extends THREE.EventDispatcher {
         } else {
             this.raycastHelper.targetWorld();
         }
+    }
+
+    setupXrReferenceSpace() {
+        this.baseReferenceSpace = null;
+        if (this.xr) {
+            this.xr.addEventListener(
+                "sessionstart",
+                () => ( this.xr.getSession().requestReferenceSpace("local-floor").then((refSpace) => {
+                    console.log(this.startPosition);
+                    this.baseReferenceSpace = refSpace;
+                    const startPositionReferenceSpace = this.baseReferenceSpace.getOffsetReferenceSpace(
+                        new XRRigidTransform(
+                            {
+                                x: -this.startPosition.x,
+                                y: -this.startPosition.y+1,
+                                z: -this.startPosition.z,
+                                w: 1,
+                            },
+                            new THREE.Quaternion()
+                        )
+                    );
+                    this.xr.setReferenceSpace(startPositionReferenceSpace);
+                }))
+            );            
+        }
+    }
+
+    performXrTeleportation(frame) {
+        const viewerPosition = frame.getViewerPose(
+            this.baseReferenceSpace
+        ).transform.position;
+        const offsetPosition = {
+            x: -this.intersection.point.x + viewerPosition.x,
+            y: -this.intersection.point.y,
+            z: -this.intersection.point.z + viewerPosition.z,
+            w: 1,
+        };
+        const offsetRotation = new THREE.Quaternion();
+        const transform = new XRRigidTransform(
+            offsetPosition,
+            offsetRotation
+        );
+        const teleportSpaceOffset =
+            this.baseReferenceSpace.getOffsetReferenceSpace(
+                transform
+            );
+        this.xr.setReferenceSpace(teleportSpaceOffset);
     }
 
     update(deltaTime, frame) {}

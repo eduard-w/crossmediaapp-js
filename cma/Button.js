@@ -35,27 +35,32 @@ export class Button extends ThreeMeshUI.InlineBlock {
             },
         };
 
-        this.setupState(idleStateAttributes);
-        this.setupState(hoveredStateAttributes);
-        this.setupState(selectedStateAttributes);
-
-        this.addEventListener("hoverdown", () => {
+        this._hoverdown = function() {
             this.setState("hovered");
-        });
-        this.addEventListener("hoverup", () => {
+        }
+        this._hoverup = function() {
             this.setState("idle");
-        });
-        this.addEventListener("selectdown", () => {
+        }
+        this._selectdown = function() {
             this.setState("selected");
-        });
-        this.addEventListener("selectup", () => {
+        }
+        this._selectup = function() {
             if (this.currentState == "selected") {
                 this.setState("hovered");
                 this.dispatchEvent({
                     type: "click",
                 });
             }
-        });
+        }
+
+        this.setupState(idleStateAttributes);
+        this.setupState(hoveredStateAttributes);
+        this.setupState(selectedStateAttributes);
+
+        this.addEventListener("hoverdown", this._hoverdown);
+        this.addEventListener("hoverup", this._hoverup);
+        this.addEventListener("selectdown", this._selectdown);
+        this.addEventListener("selectup", this._selectup);
 
         this.setState("idle");
     }
