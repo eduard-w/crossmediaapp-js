@@ -11,7 +11,7 @@ export class DesktopInputManager extends InputManager {
         this.selectorY = 0;
         this.pastRotation = null;
         this.floorRaycaster = new THREE.Raycaster();
-        this.vectorDown = new THREE.Vector3(0,-1,0);
+        this.vectorDown = new THREE.Vector3(0, -1, 0);
 
         this.targetTransform.position.copy(startPosition);
         this.setupCrosshair();
@@ -50,13 +50,13 @@ export class DesktopInputManager extends InputManager {
 
         window.addEventListener("pointerdown", (event) => {
             this.dispatchEvent({
-                type: "selectdown"
+                type: "selectdown",
             });
         });
 
         window.addEventListener("pointerup", (event) => {
             this.dispatchEvent({
-                type: "selectup"
+                type: "selectup",
             });
             if (!this.isMenuEnabled) {
                 document.body.requestPointerLock();
@@ -87,23 +87,28 @@ export class DesktopInputManager extends InputManager {
     }
 
     setupCrosshair() {
-        const overlay = document.getElementById('overlay');
+        const overlay = document.getElementById("overlay");
 
-		const svg = document.createElementNS( 'http://www.w3.org/2000/svg', 'svg' );
-		svg.setAttribute( 'width', 40 );
-		svg.setAttribute( 'height', 40 );
-		svg.style.position = 'absolute';
-		svg.style.left = 'calc(50% - 20px)';
-		svg.style.top = 'calc(50% - 20px)';
-		overlay.appendChild( svg );
+        const svg = document.createElementNS(
+            "http://www.w3.org/2000/svg",
+            "svg"
+        );
+        svg.setAttribute("width", 40);
+        svg.setAttribute("height", 40);
+        svg.style.position = "absolute";
+        svg.style.left = "calc(50% - 20px)";
+        svg.style.top = "calc(50% - 20px)";
+        overlay.appendChild(svg);
 
-		const path = document.createElementNS( 'http://www.w3.org/2000/svg', 'path' );
-		//path.setAttribute('d', 'M 15,10 V 40 M 10,15 H 40');
-		path.setAttribute('d', 'M 0,0 V 40 M 0,0 H 40');
-		path.setAttribute('d', 'M 20,15 V 25 M 15,20 H 25');
-		path.setAttribute( 'stroke', '#fff' );
-		path.setAttribute( 'stroke-width', 1 );
-		svg.appendChild( path );
+        const path = document.createElementNS(
+            "http://www.w3.org/2000/svg",
+            "path"
+        );
+        path.setAttribute("d", "M 0,0 V 40 M 0,0 H 40");
+        path.setAttribute("d", "M 20,15 V 25 M 15,20 H 25");
+        path.setAttribute("stroke", "#fff");
+        path.setAttribute("stroke-width", 1);
+        svg.appendChild(path);
     }
 
     update(deltaTime, frame) {
@@ -143,9 +148,25 @@ export class DesktopInputManager extends InputManager {
         if (this.targetVelocity.length() > 0) {
             let onFloor = true;
             for (let i of [
-                this.targetTransform.position.clone().addScaledVector(this.targetVelocity, 4),
-                this.targetTransform.position.clone().addScaledVector(this.targetVelocity.clone().applyAxisAngle(this.vectorDown, -Math.PI/6),4),
-                this.targetTransform.position.clone().addScaledVector(this.targetVelocity.clone().applyAxisAngle(this.vectorDown, Math.PI/6),4),
+                this.targetTransform.position
+                    .clone()
+                    .addScaledVector(this.targetVelocity, 4),
+                this.targetTransform.position
+                    .clone()
+                    .addScaledVector(
+                        this.targetVelocity
+                            .clone()
+                            .applyAxisAngle(this.vectorDown, -Math.PI / 6),
+                        4
+                    ),
+                this.targetTransform.position
+                    .clone()
+                    .addScaledVector(
+                        this.targetVelocity
+                            .clone()
+                            .applyAxisAngle(this.vectorDown, Math.PI / 6),
+                        4
+                    ),
             ]) {
                 if (this.isOutsideFloor(i)) {
                     onFloor = false;

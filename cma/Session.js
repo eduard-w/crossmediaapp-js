@@ -36,12 +36,12 @@ export class Session extends THREE.EventDispatcher {
         // renderer
         this.renderer = new THREE.WebGLRenderer();
         this.renderer.setSize(window.innerWidth, window.innerHeight);
+
         // handle autoclear manually
         this.renderer.autoClear = false;
         document.body.appendChild(this.renderer.domElement);
 
         this.hasTouchScreen = isOnMobile();
-
         this.sessionOptions = {
             optionalFeatures: ["local-floor", "bounded-floor", "layers", "dom-overlay"],
         };

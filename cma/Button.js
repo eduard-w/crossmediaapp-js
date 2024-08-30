@@ -35,23 +35,23 @@ export class Button extends ThreeMeshUI.InlineBlock {
             },
         };
 
-        this._hoverdown = function() {
+        this._hoverdown = function () {
             this.setState("hovered");
-        }
-        this._hoverup = function() {
+        };
+        this._hoverup = function () {
             this.setState("idle");
-        }
-        this._selectdown = function() {
+        };
+        this._selectdown = function () {
             this.setState("selected");
-        }
-        this._selectup = function() {
+        };
+        this._selectup = function () {
             if (this.currentState == "selected") {
                 this.setState("hovered");
                 this.dispatchEvent({
                     type: "click",
                 });
             }
-        }
+        };
 
         this.setupState(idleStateAttributes);
         this.setupState(hoveredStateAttributes);

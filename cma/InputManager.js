@@ -22,7 +22,7 @@ export class InputManager extends THREE.EventDispatcher {
         this.targetTransform = targetTransform;
         this.startPosition = startPosition;
         this.raycastHelper = raycastHelper;
-        
+
         this.upDirection = new THREE.Vector3(0, 1, 0);
         this.zeroRotation = new THREE.Quaternion(0, 0, 0, 1);
         this.isSelectorDown = false;
@@ -32,10 +32,6 @@ export class InputManager extends THREE.EventDispatcher {
         this.xr = null;
         this.yOffset = 1.5;
 
-        // this.addEventListener("hover", (event) => {
-        //     this.selectorX = event.posX;
-        //     this.selectorY = event.posY;
-        // });
         this.addEventListener("selectdown", (event) => {
             this.isSelectorDown = true;
             if (this.intersection) {
@@ -88,11 +84,16 @@ export class InputManager extends THREE.EventDispatcher {
             this.intersection = null;
         }
 
-        let currentRotation = this.raycastHelper.raycaster.ray.direction.clone().normalize();
+        let currentRotation = this.raycastHelper.raycaster.ray.direction
+            .clone()
+            .normalize();
         if (this.pastRotation == null) {
             this.pastRotation = currentRotation.clone();
         }
-        let rotationDelta = new THREE.Quaternion().setFromUnitVectors(this.pastRotation, currentRotation);
+        let rotationDelta = new THREE.Quaternion().setFromUnitVectors(
+            this.pastRotation,
+            currentRotation
+        );
         if (!rotationDelta.equals(this.zeroRotation)) {
             this.dispatchEvent({
                 type: "selectmove",
@@ -126,47 +127,44 @@ export class InputManager extends THREE.EventDispatcher {
     setupXrReferenceSpace() {
         this.baseReferenceSpace = null;
         if (this.xr) {
-            this.xr.addEventListener(
-                "sessionstart",
-                () => ( this.xr.getSession().requestReferenceSpace("local-floor").then((refSpace) => {
-                    console.log(this.startPosition);
-                    this.baseReferenceSpace = refSpace;
-                    const startPositionReferenceSpace = this.baseReferenceSpace.getOffsetReferenceSpace(
-                        new XRRigidTransform(
-                            {
-                                x: -this.startPosition.x,
-                                y: -this.startPosition.y+this.yOffset,
-                                z: -this.startPosition.z,
-                                w: 1,
-                            },
-                            new THREE.Quaternion()
-                        )
-                    );
-                    this.xr.setReferenceSpace(startPositionReferenceSpace);
-                }))
-            );            
+            this.xr.addEventListener("sessionstart", () =>
+                this.xr
+                    .getSession()
+                    .requestReferenceSpace("local-floor")
+                    .then((refSpace) => {
+                        console.log(this.startPosition);
+                        this.baseReferenceSpace = refSpace;
+                        const startPositionReferenceSpace =
+                            this.baseReferenceSpace.getOffsetReferenceSpace(
+                                new XRRigidTransform(
+                                    {
+                                        x: -this.startPosition.x,
+                                        y: -this.startPosition.y + this.yOffset,
+                                        z: -this.startPosition.z,
+                                        w: 1,
+                                    },
+                                    new THREE.Quaternion()
+                                )
+                            );
+                        this.xr.setReferenceSpace(startPositionReferenceSpace);
+                    })
+            );
         }
     }
 
     performXrTeleportation(frame, position) {
-        const viewerPosition = frame.getViewerPose(
-            this.baseReferenceSpace
-        ).transform.position;
+        const viewerPosition = frame.getViewerPose(this.baseReferenceSpace)
+            .transform.position;
         const offsetPosition = {
             x: -position.x + viewerPosition.x,
-            y: -position.y+this.yOffset,
+            y: -position.y + this.yOffset,
             z: -position.z + viewerPosition.z,
             w: 1,
         };
         const offsetRotation = new THREE.Quaternion();
-        const transform = new XRRigidTransform(
-            offsetPosition,
-            offsetRotation
-        );
+        const transform = new XRRigidTransform(offsetPosition, offsetRotation);
         const teleportSpaceOffset =
-            this.baseReferenceSpace.getOffsetReferenceSpace(
-                transform
-            );
+            this.baseReferenceSpace.getOffsetReferenceSpace(transform);
         this.xr.setReferenceSpace(teleportSpaceOffset);
     }
 

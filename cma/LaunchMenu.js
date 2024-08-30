@@ -17,8 +17,8 @@ export class LaunchMenu {
                         ? "VR MODE"
                         : "VR NOT SUPPORTED";
                     if (!supported) {
-						this.disableButton(this.vrButton);
-					}
+                        this.disableButton(this.vrButton);
+                    }
                 })
                 .catch(() => {
                     console.warn(
@@ -28,28 +28,28 @@ export class LaunchMenu {
                     this.vrButton.textContent = "VR NOT ALLOWED";
                 });
 
-			navigator.xr
-			.isSessionSupported("immersive-ar")
-			.then((supported) => {
-				this.arButton.textContent = supported
-					? "AR MODE"
-					: "AR NOT SUPPORTED";
-				if (!supported) {
-					this.disableButton(this.arButton);
-				}
-			})
-			.catch(() => {
-				console.warn(
-					"Exception when trying to call xr.isSessionSupported('immersive-ar')",
-					exception
-				);
-				this.vrButton.textContent = "AR NOT ALLOWED";
-			});
+            navigator.xr
+                .isSessionSupported("immersive-ar")
+                .then((supported) => {
+                    this.arButton.textContent = supported
+                        ? "AR MODE"
+                        : "AR NOT SUPPORTED";
+                    if (!supported) {
+                        this.disableButton(this.arButton);
+                    }
+                })
+                .catch(() => {
+                    console.warn(
+                        "Exception when trying to call xr.isSessionSupported('immersive-ar')",
+                        exception
+                    );
+                    this.vrButton.textContent = "AR NOT ALLOWED";
+                });
         } else {
             this.container.removeChild(this.vrButton);
             this.container.removeChild(this.arButton);
             this.errorButton = this.newButton();
-			this.disableButton(this.errorButton);
+            this.disableButton(this.errorButton);
             if (window.isSecureContext === false) {
                 this.errorButton.textContent = "WEBXR NEEDS HTTPS";
             } else {
@@ -58,12 +58,12 @@ export class LaunchMenu {
         }
     }
 
-	disableButton(button) {
-		button.disabled = true;
-		button.style.opacity = 0.35;
-		button.onmouseenter = null;
-		button.onmouseleave = null;
-	}
+    disableButton(button) {
+        button.disabled = true;
+        button.style.opacity = 0.35;
+        button.onmouseenter = null;
+        button.onmouseleave = null;
+    }
 
     newButton() {
         const buttonDiv = document.createElement("div");
