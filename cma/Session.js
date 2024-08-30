@@ -22,16 +22,16 @@ export class Session extends THREE.EventDispatcher {
             1000
         );
         this.targetCamera.rotation.order = "YXZ";
-        this.startPosition = new THREE.Vector3(0,1,0);
 
         this.appMenu = new CMA.AppMenu();
-        this.raycastHelper.registerObjectInGui(this.appMenu);
         this.appMenu.buttonClose.addEventListener('click', (event) => {
             this.inputManager.toggleMenu();
         });
+        this.registerObjectInGui(this.appMenu.buttonClose);
         this.appMenu.buttonQuit.addEventListener('click', (event) => {
             this.quit();
         });
+        this.registerObjectInGui(this.appMenu.buttonQuit);
 
         // renderer
         this.renderer = new THREE.WebGLRenderer();
@@ -58,6 +58,7 @@ export class Session extends THREE.EventDispatcher {
         });
 
         this.mode = null;
+        this.nextTeleportPosition = null;
     }
 
     setWorldScene(scene) {
@@ -71,7 +72,26 @@ export class Session extends THREE.EventDispatcher {
         this.guiScene.add(this.targetCamera);
     }
 
+    registerObjectInGui(object) {
+        this.raycastHelper.raycastTargetsGui.add(object);
+    }
+
+    unregisterObjectInGui(object) {
+        this.raycastHelper.raycastTargetsGui.delete(object);
+    }
+
+    registerObjectInWorld(object) {
+        this.raycastHelper.raycastTargetsWorld.add(object);
+    }
+
+    unregisterObjectInWorld(object) {
+        this.raycastHelper.raycastTargetsWorld.delete(object);
+    }
+
     launchDesktopSession() {
+        // desktop sessions don't need quit button
+        this.appMenu.remove(this.appMenu.buttonQuit);
+
         this.setupDomOverlay();
         this.inputManager = new CMA.DesktopInputManager(
             this.targetCamera,
@@ -195,6 +215,15 @@ export class Session extends THREE.EventDispatcher {
     }
 
     drawFrame(time, frame) {
+        if (this.nextTeleportPosition) {
+            if (frame) {
+                this.inputManager.performXrTeleportation(frame, this.nextTeleportPosition);
+            } else {
+                this.inputManager.targetTransform.position.copy(this.nextTeleportPosition);
+            }
+            this.nextTeleportPosition = null;
+        }
+
         this.renderer.clear();
         this.renderer.render(this.worldScene, this.targetCamera);
 
@@ -208,6 +237,10 @@ export class Session extends THREE.EventDispatcher {
             type: "update",
             deltaTime: time
         });
+    }
+
+    queueTeleport(position) {
+        this.nextTeleportPosition = position;
     }
 
     start() {

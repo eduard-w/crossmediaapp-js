@@ -30,6 +30,7 @@ export class InputManager extends THREE.EventDispatcher {
         this.isMenuEnabled = false;
         this.intersection = null;
         this.xr = null;
+        this.yOffset = 1.5;
 
         // this.addEventListener("hover", (event) => {
         //     this.selectorX = event.posX;
@@ -134,7 +135,7 @@ export class InputManager extends THREE.EventDispatcher {
                         new XRRigidTransform(
                             {
                                 x: -this.startPosition.x,
-                                y: -this.startPosition.y+1,
+                                y: -this.startPosition.y+this.yOffset,
                                 z: -this.startPosition.z,
                                 w: 1,
                             },
@@ -147,14 +148,14 @@ export class InputManager extends THREE.EventDispatcher {
         }
     }
 
-    performXrTeleportation(frame) {
+    performXrTeleportation(frame, position) {
         const viewerPosition = frame.getViewerPose(
             this.baseReferenceSpace
         ).transform.position;
         const offsetPosition = {
-            x: -this.intersection.point.x + viewerPosition.x,
-            y: -this.intersection.point.y,
-            z: -this.intersection.point.z + viewerPosition.z,
+            x: -position.x + viewerPosition.x,
+            y: -position.y+this.yOffset,
+            z: -position.z + viewerPosition.z,
             w: 1,
         };
         const offsetRotation = new THREE.Quaternion();

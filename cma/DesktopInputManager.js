@@ -161,6 +161,6 @@ export class DesktopInputManager extends InputManager {
     isOutsideFloor(position) {
         this.raycastHelper.raycaster.set(position, this.vectorDown);
         let distance = this.raycastHelper.raycastFloorDistance();
-        return distance > 2;
+        return distance > 3;
     }
 }

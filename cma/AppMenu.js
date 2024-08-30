@@ -1,8 +1,8 @@
 import ThreeMeshUI from "three-mesh-ui";
 import * as CMA from "./Cma.js";
 
-import FontJSON from "./fonts/Roboto-msdf.json";
-import FontImage from "./fonts/Roboto-msdf.png";
+import FontJSON from "./examples/assets/fonts/Roboto-msdf.json";
+import FontImage from "./examples/assets/fonts/Roboto-msdf.png";
 
 export class AppMenu extends ThreeMeshUI.Block {
 	constructor() {

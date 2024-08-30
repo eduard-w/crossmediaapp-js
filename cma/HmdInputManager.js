@@ -144,7 +144,7 @@ export class HmdVrInputManager extends InputManager {
                 this.triggerHoldTime = null;
                 
                 if (this.mode == "immersive-vr" && this.isFloorTargeted() && this.teleportationSelectionQueued) {
-                    this.performXrTeleportation(frame);
+                    this.performXrTeleportation(frame, this.intersection.point.setComponent(1,this.intersection.point.y+this.yOffset));
                 }
                 this.teleportationSelectionQueued = false;
             }

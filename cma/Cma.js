@@ -8,3 +8,4 @@ export { RaycastHelper } from "./RaycastHelper.js";
 export { MobileVrInputManager } from "./MobileVrInputManager.js";
 export { MobileArInputManager } from "./MobileArInputManager.js";
 export { AppMenu } from "./AppMenu.js";
+export { isObjectFloor } from "./Utils.js";

@@ -90,7 +90,7 @@ export class MobileVrInputManager extends InputManager {
 		}
 
 		if (this.teleportationQueued) {
-			this.performXrTeleportation(frame);
+			this.performXrTeleportation(frame, this.intersection.point.setComponent(1,this.intersection.point.y+this.yOffset));
 			this.teleportationQueued = false;
 		}
 
