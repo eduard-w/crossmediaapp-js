@@ -1,4 +1,4 @@
-import * as CMA from "../Cma.js";
+import * as CMA from "../../Cma.js";
 import * as THREE from "three";
 import ThreeMeshUI from "three-mesh-ui";
 import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
@@ -13,11 +13,45 @@ session.setWorldScene(worldScene);
 session.setGuiScene(guiScene);
 session.startPosition = new THREE.Vector3(0, 0.5, 0);
 
+session.addEventListener("started", (event) => {
+    if (!(session.mode == "mobile-ar" || session.mode == "hmd-ar")) {
+        // load env map
+        new EXRLoader().load(
+            new URL("./assets/env_maps/meadow_2_1k.exr", import.meta.url).href,
+            function (texture) {
+                texture.mapping = THREE.EquirectangularReflectionMapping;
+                worldScene.background = texture;
+            }
+        );
+    }
+});
+
 // light
 const ambientLight = new THREE.AmbientLight(0xffffff, 1);
 ambientLight.castShadow = true;
 worldScene.add(ambientLight);
 
+// UI
+const uiLabel = new ThreeMeshUI.Text({
+    fontSize: 0.1,
+    content: "\nApartments\n",
+});
+session.appMenu.add(uiLabel);
+session.appMenu.set({
+    height: 1.3,
+});
+
+const uiOptions = {
+    width: 0.75,
+    height: 0.375,
+    padding: 0.05,
+    justifyContent: "center",
+    textAlign: "center",
+    fontFamily: FontJSON,
+    fontTexture: FontImage,
+};
+
+// load model
 const objLoader = new GLTFLoader();
 async function loadObject(path) {
     return new Promise((res, rej) => {
@@ -34,28 +68,7 @@ async function loadObject(path) {
     });
 }
 
-const uiLabel = new ThreeMeshUI.Text({
-    fontSize: 0.1,
-    content: "\nApartments\n",
-});
-session.appMenu.add(uiLabel);
-session.appMenu.set({
-    height: 1.3,
-});
-
-function getFloors(object) {
-    let floors = [];
-    object.traverse((obj) => {
-        if (CMA.isObjectFloor(obj)) {
-            floors.push(obj);
-        }
-    });
-    return floors;
-}
-
-let apartmentScene = null;
-
-function addApartmentButton(object) {
+function addReturnButton(object) {
     const button = new CMA.Button(CMA.AppMenu.defaultButtonOptions);
     button.add(new ThreeMeshUI.Text({ content: "Return to Start" }));
     button.addEventListener("click", (event) => {
@@ -67,21 +80,34 @@ function addApartmentButton(object) {
     return button;
 }
 
-const uiOptions = {
-    width: 0.75,
-    height: 0.375,
-    padding: 0.05,
-    justifyContent: "center",
-    textAlign: "center",
-    fontFamily: FontJSON,
-    fontTexture: FontImage,
-};
+function addTeleportButton(position, text, teleportPosition) {
+    let ui = new ThreeMeshUI.Block(uiOptions);
+    ui.position.copy(position);
+    let button = new CMA.Button(CMA.AppMenu.defaultButtonOptions);
 
-const apartment_path =
-    "./cma/examples/assets/apartments/apartment1/apartment_1.gltf";
+    button.add(new ThreeMeshUI.Text({ content: text }));
+    button.addEventListener("click", (event) => {
+        session.queueTeleport(teleportPosition);
+    });
+    session.registerObjectInWorld(button);
+    ui.add(button);
+    apartmentScene.add(ui);
+}
+
+function loadApartment() {
+    worldScene.add(apartmentScene);
+    apartmentScene.traverse((obj) => {
+        if (obj.children.length == 0) {
+            session.registerObjectInWorld(obj);
+        }
+    });
+}
+
+let apartmentScene = null;
+const apartment_path = new URL("./assets/apartments/apartment1/apartment_1.gltf", import.meta.url).href;
 loadObject(apartment_path).then((gltf) => {
     apartmentScene = gltf.scene;
-    addApartmentButton(apartmentScene);
+    addReturnButton(apartmentScene);
     apartmentScene.traverse((obj) => {
         if (CMA.isObjectFloor(obj)) {
             obj.material.transparent = true;
@@ -108,37 +134,4 @@ loadObject(apartment_path).then((gltf) => {
     loadApartment();
 });
 
-function addTeleportButton(position, text, teleportPosition) {
-    let ui = new ThreeMeshUI.Block(uiOptions);
-    ui.position.copy(position);
-    let button = new CMA.Button(CMA.AppMenu.defaultButtonOptions);
 
-    button.add(new ThreeMeshUI.Text({ content: text }));
-    button.addEventListener("click", (event) => {
-        session.queueTeleport(teleportPosition);
-    });
-    session.registerObjectInWorld(button);
-    ui.add(button);
-    apartmentScene.add(ui);
-}
-
-function loadApartment() {
-    worldScene.add(apartmentScene);
-    let currentFloors = getFloors(apartmentScene);
-    for (let obj of currentFloors) {
-        session.registerObjectInWorld(obj);
-    }
-}
-
-session.addEventListener("started", (event) => {
-    if (!(session.mode == "mobile-ar" || session.mode == "hmd-ar")) {
-        // load env map
-        new EXRLoader().load(
-            "./cma/examples/assets/env_maps/meadow_2_1k.exr",
-            function (texture) {
-                texture.mapping = THREE.EquirectangularReflectionMapping;
-                worldScene.background = texture;
-            }
-        );
-    }
-});

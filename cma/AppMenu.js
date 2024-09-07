@@ -1,5 +1,5 @@
 import ThreeMeshUI from "three-mesh-ui";
-import * as CMA from "./Cma.js";
+import * as CMA from "../Cma.js";
 
 import FontJSON from "./examples/assets/fonts/Roboto-msdf.json";
 import FontImage from "./examples/assets/fonts/Roboto-msdf.png";
@@ -40,18 +40,18 @@ export class AppMenu extends ThreeMeshUI.Block {
     static _getNewButtonClose() {
         const button = new CMA.Button(AppMenu.defaultButtonOptions);
         button.add(new ThreeMeshUI.Text({ content: "Close" }));
-        button.addEventListener("click", (event) => {
-            console.log("close button");
-        });
+        // button.addEventListener("click", (event) => {
+        //     console.log("close button");
+        // });
         return button;
     }
 
     static _getNewButtonQuit() {
         const button = new CMA.Button(AppMenu.defaultButtonOptions);
         button.add(new ThreeMeshUI.Text({ content: "Quit" }));
-        button.addEventListener("click", (event) => {
-            console.log("quit button");
-        });
+        // button.addEventListener("click", (event) => {
+        //     console.log("quit button");
+        // });
         return button;
     }
 }

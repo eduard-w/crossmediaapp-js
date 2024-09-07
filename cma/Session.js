@@ -1,5 +1,5 @@
 import * as THREE from "three";
-import * as CMA from "./Cma.js";
+import * as CMA from "../Cma.js";
 import ThreeMeshUI from "three-mesh-ui";
 import { isOnMobile } from "./Utils.js";
 
@@ -248,7 +248,6 @@ export class Session extends THREE.EventDispatcher {
         this.dispatchEvent({
             type: "started",
         });
-        console.log("session started");
     }
 
     quit() {

@@ -1,4 +1,5 @@
 import * as THREE from "three";
+import * as CMA from "../Cma.js";
 
 import { InputManager } from "./InputManager";
 
@@ -101,9 +102,10 @@ export class MobileVrInputManager extends InputManager {
             this.teleportationQueued = false;
         }
 
+        let nothingSelected = !(this.intersection && CMA.isObjectInteractable(this.intersection.object));
         // hold for 2000 milliseconds
         if (
-            !this.intersection &&
+            nothingSelected &&
             this.button0_hold_time &&
             performance.now() - this.button0_hold_time > 2000
         ) {

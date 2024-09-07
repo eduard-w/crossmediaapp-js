@@ -16,3 +16,18 @@ export function isObjectFloor(obj) {
         obj && obj.name && obj.name.toLowerCase().slice(0, 10) == "scenefloor"
     );
 }
+
+export function isObjectInteractable(obj) {
+    if (obj == null) {
+        return false;
+    }
+    else if (isObjectFloor(obj)) {
+        return true
+    }
+    for (event of ["hoverdown", "hoverup", "selectdown", "selectup"]) {
+        if (obj._listeners && obj._listeners[event] !== undefined) {
+            return true;
+        }
+    }
+    return false;
+}

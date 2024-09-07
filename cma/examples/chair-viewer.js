@@ -1,4 +1,4 @@
-import * as CMA from "../Cma.js";
+import * as CMA from "../../Cma.js";
 import * as THREE from "three";
 import ThreeMeshUI from "three-mesh-ui";
 import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
@@ -59,9 +59,9 @@ function setChair(index) {
     updateLabel();
 }
 
-const antique_chair = "./cma/examples/assets/antique_chair/scene.gltf";
-const rustic_chair = "./cma/examples/assets/rustic_chair/scene.gltf";
-const victorian_chair = "./cma/examples/assets/victorian_chair/scene.gltf";
+const antique_chair = new URL("./assets/antique_chair/scene.gltf", import.meta.url).href;
+const rustic_chair = new URL("./assets/rustic_chair/scene.gltf", import.meta.url).href;
+const victorian_chair = new URL("./assets/victorian_chair/scene.gltf", import.meta.url).href;
 
 for (let path of [antique_chair, rustic_chair, victorian_chair]) {
     loadObject(path).then((gltf) => {
@@ -146,30 +146,22 @@ buttonTranslateMode.addEventListener("click", (event) => {
     buttonTranslateMode.setState("selected");
     buttonRotateMode.setState("idle");
 });
-const buttonHoverUp = function () {
-    if (this.currentState == "hovered") {
-        this.setState("idle");
-    }
-};
-const buttonHoverDown = function () {
-    if (this.currentState == "idle") {
-        this.setState("hovered");
-    }
-};
-buttonRotateMode.removeEventListener("hoverup", buttonRotateMode._hoverup);
-buttonRotateMode.addEventListener("hoverup", buttonHoverUp);
-buttonRotateMode.removeEventListener("hoverdown", buttonRotateMode._hoverdown);
-buttonRotateMode.addEventListener("hoverdown", buttonHoverDown);
-buttonTranslateMode.removeEventListener(
-    "hoverup",
-    buttonTranslateMode._hoverup
-);
-buttonTranslateMode.addEventListener("hoverup", buttonHoverUp);
-buttonTranslateMode.removeEventListener(
-    "hoverdown",
-    buttonTranslateMode._hoverdown
-);
-buttonTranslateMode.addEventListener("hoverdown", buttonHoverDown);
+function toStateButton(button) {
+    button.removeEventListener("hoverup", button._hoverup);
+    button.addEventListener("hoverup", function() {
+        if (this.currentState == "hovered") {
+            this.setState("idle");
+        }
+    }.bind(button));
+    button.removeEventListener("hoverdown", button._hoverdown);
+    button.addEventListener("hoverdown", function() {
+        if (this.currentState == "idle") {
+            this.setState("hovered");
+        }
+    }.bind(button));
+}
+toStateButton(buttonTranslateMode);
+toStateButton(buttonRotateMode);
 buttonRotateMode.setState("selected");
 
 session.appMenu.add(uiLabel);
@@ -193,13 +185,14 @@ session.addEventListener("started", (event) => {
     } else {
         // load env map
         new EXRLoader().load(
-            "./cma/examples/assets/env_maps/photo_studio_broadway_hall_1k.exr",
+            new URL("./assets/env_maps/photo_studio_broadway_hall_1k.exr", import.meta.url).href,
             function (texture) {
                 texture.mapping = THREE.EquirectangularReflectionMapping;
                 worldScene.background = texture;
             }
         );
     }
+
     session.inputManager.addEventListener("selectup", (event) => {
         if (chairSelected) {
             chairSelected = false;
@@ -244,6 +237,7 @@ chairContainer.addEventListener("hoverdown", (event) => {
 chairContainer.addEventListener("hoverup", (event) => {
     chairContainer.remove(wireframeMesh);
 });
+
 chairContainer.addEventListener("selectdown", (event) => {
     chairSelected = true;
 });

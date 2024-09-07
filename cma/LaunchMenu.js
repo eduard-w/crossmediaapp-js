@@ -46,8 +46,8 @@ export class LaunchMenu {
                     this.vrButton.textContent = "AR NOT ALLOWED";
                 });
         } else {
-            this.container.removeChild(this.vrButton);
-            this.container.removeChild(this.arButton);
+            this.container.removeChild(this.vrButton.parentNode);
+            this.container.removeChild(this.arButton.parentNode);
             this.errorButton = this.newButton();
             this.disableButton(this.errorButton);
             if (window.isSecureContext === false) {

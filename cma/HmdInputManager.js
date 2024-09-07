@@ -1,4 +1,5 @@
 import * as THREE from "three";
+import * as CMA from "../Cma.js";
 
 import { InputManager } from "./InputManager";
 import { XRControllerModelFactory } from "three/addons/webxr/XRControllerModelFactory.js";
@@ -132,7 +133,7 @@ export class HmdVrInputManager extends InputManager {
                     type: "selectdown",
                 });
 
-                if (!this.intersection) {
+                if (!(this.intersection && CMA.isObjectInteractable(this.intersection.object))) {
                     this.triggerHoldTime = performance.now();
                 } else if (this.isFloorTargeted()) {
                     this.teleportationSelectionQueued = true;

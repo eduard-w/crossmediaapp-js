@@ -132,7 +132,6 @@ export class InputManager extends THREE.EventDispatcher {
                     .getSession()
                     .requestReferenceSpace("local-floor")
                     .then((refSpace) => {
-                        console.log(this.startPosition);
                         this.baseReferenceSpace = refSpace;
                         const startPositionReferenceSpace =
                             this.baseReferenceSpace.getOffsetReferenceSpace(
